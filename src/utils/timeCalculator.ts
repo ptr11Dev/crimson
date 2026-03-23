@@ -121,7 +121,8 @@ export const calculateSpeedupRemaining = (
 
   // lastSpeedup contains the NEXT speedup time
   const nextSpeedupMinutes = parseGameTime(lastSpeedup.time);
-  const nextSpeedupTotalMinutes = (lastSpeedup.day - 1) * 24 * 60 + nextSpeedupMinutes;
+  const nextSpeedupTotalMinutes =
+    (lastSpeedup.day - 1) * 24 * 60 + nextSpeedupMinutes;
 
   const currentMinutes = parseGameTime(currentTime);
   const currentTotalMinutes = (currentDay - 1) * 24 * 60 + currentMinutes;
