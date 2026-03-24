@@ -11,6 +11,7 @@ interface TimerProps {
   onDelete?: () => void;
   onReset?: () => void;
   realTimeRemaining?: string | null;
+  gameTimeRemaining?: string | null;
 }
 
 function getProgressGradient(pct: number): string {
@@ -40,6 +41,7 @@ function Timer({
   onDelete,
   onReset,
   realTimeRemaining,
+  gameTimeRemaining,
 }: TimerProps) {
   const pct = Math.min(100, Math.max(0, currentProgress));
 
@@ -90,8 +92,8 @@ function Timer({
         </div>
       </div>
 
-      {/* Row 2: target time + real countdown */}
-      <div className="flex items-baseline justify-between gap-2">
+      {/* Row 2: target time + countdowns */}
+      <div className="flex items-start justify-between gap-2">
         <span
           className={`font-mono font-bold text-sm leading-none ${
             isReady ? 'text-emerald-400' : 'text-slate-200'
@@ -99,10 +101,19 @@ function Timer({
         >
           {formatGameDateTime(targetDay, targetTime)}
         </span>
-        {!isReady && realTimeRemaining && (
-          <span className="font-mono text-amber-400 text-[11px] leading-none shrink-0">
-            {realTimeRemaining}
-          </span>
+        {!isReady && (realTimeRemaining || gameTimeRemaining) && (
+          <div className="flex flex-col items-end gap-0.5">
+            {realTimeRemaining && (
+              <span className="font-mono text-amber-400 text-[11px] leading-none shrink-0">
+                ⏱ {realTimeRemaining}
+              </span>
+            )}
+            {gameTimeRemaining && (
+              <span className="font-mono text-sky-400 text-[11px] leading-none shrink-0">
+                🎮 {gameTimeRemaining}
+              </span>
+            )}
+          </div>
         )}
       </div>
 

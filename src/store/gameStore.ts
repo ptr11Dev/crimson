@@ -30,7 +30,6 @@ export interface SavedSessionData {
   nextSpeedupHours: number | null;
   nextIncomeDays: number | null;
   nextIncomeHours: number | null;
-  nextIncomeMinutes: number | null;
   remainingMissions: SavedMission[];
   lastGameDay: number | null;
   lastGameTime: string | null;
@@ -65,7 +64,6 @@ interface GameState {
     nextSpeedupHours: number,
     nextIncomeDays: number | null,
     nextIncomeHours: number | null,
-    nextIncomeMinutes: number | null,
     goldbarDay: number | null,
     existingMissions?: Mission[],
   ) => void;
@@ -129,7 +127,6 @@ const useGameStore = create<GameState>()(
         nextSpeedupHours: null,
         nextIncomeDays: null,
         nextIncomeHours: null,
-        nextIncomeMinutes: null,
         remainingMissions: [],
         lastGameDay: null,
         lastGameTime: null,
@@ -141,7 +138,6 @@ const useGameStore = create<GameState>()(
         nextSpeedupHours,
         nextIncomeDays,
         nextIncomeHours,
-        nextIncomeMinutes,
         goldbarDay,
         existingMissions = [],
       ) => {
@@ -158,17 +154,11 @@ const useGameStore = create<GameState>()(
           time: speedupNext.time,
         };
 
-        // Next income = current game time + (days * 24 + hours + minutes/60)
+        // Next income = current game time + (days * 24 + hours)
         let lastIncome: IncomeTimestamp | null = null;
-        if (
-          nextIncomeDays !== null ||
-          nextIncomeHours !== null ||
-          nextIncomeMinutes !== null
-        ) {
+        if (nextIncomeDays !== null || nextIncomeHours !== null) {
           const totalMins =
-            (nextIncomeDays ?? 0) * 24 * 60 +
-            (nextIncomeHours ?? 0) * 60 +
-            (nextIncomeMinutes ?? 0);
+            (nextIncomeDays ?? 0) * 24 * 60 + (nextIncomeHours ?? 0) * 60;
           const incomeNext = addGameMinutes(gameDay, gameTime, totalMins);
           lastIncome = { day: incomeNext.day, time: incomeNext.time };
         }
@@ -205,7 +195,6 @@ const useGameStore = create<GameState>()(
         // --- next income remaining ---
         let nextIncomeDays: number | null = null;
         let nextIncomeHours: number | null = null;
-        let nextIncomeMinutes: number | null = null;
         if (state.lastIncome) {
           const remainingMins = diffGameMinutes(
             state.lastIncome.day,
@@ -216,7 +205,6 @@ const useGameStore = create<GameState>()(
           const remaining = Math.max(0, remainingMins);
           nextIncomeDays = Math.floor(remaining / (24 * 60));
           nextIncomeHours = Math.floor((remaining % (24 * 60)) / 60);
-          nextIncomeMinutes = remaining % 60;
         }
 
         // --- missions remaining ---
@@ -242,7 +230,6 @@ const useGameStore = create<GameState>()(
           nextSpeedupHours,
           nextIncomeDays,
           nextIncomeHours,
-          nextIncomeMinutes,
           remainingMissions,
           lastGameDay: state.currentGameDay,
           lastGameTime: state.currentGameTime,

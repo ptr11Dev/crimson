@@ -12,7 +12,6 @@ function GameStart() {
   const [nextSpeedupHours, setNextSpeedupHours] = useState<string>('10');
   const [nextIncomeDays, setNextIncomeDays] = useState<string>('');
   const [nextIncomeHours, setNextIncomeHours] = useState<string>('');
-  const [nextIncomeMinutes, setNextIncomeMinutes] = useState<string>('');
   const [goldbarDay, setGoldbarDay] = useState<string>('');
 
   // Auto-fill from persisted data on mount
@@ -30,9 +29,6 @@ function GameStart() {
     }
     if (savedSessionData?.nextIncomeHours != null) {
       setNextIncomeHours(String(savedSessionData.nextIncomeHours));
-    }
-    if (savedSessionData?.nextIncomeMinutes != null) {
-      setNextIncomeMinutes(String(savedSessionData.nextIncomeMinutes));
     }
     if (savedSessionData?.nextSpeedupHours != null) {
       setNextSpeedupHours(
@@ -52,9 +48,6 @@ function GameStart() {
     const speedupH = parseFloat(nextSpeedupHours) || 10;
     const incDays = nextIncomeDays.trim() ? parseInt(nextIncomeDays) : null;
     const incHours = nextIncomeHours.trim() ? parseInt(nextIncomeHours) : null;
-    const incMins = nextIncomeMinutes.trim()
-      ? parseInt(nextIncomeMinutes)
-      : null;
     const gbDay = goldbarDay.trim() ? parseInt(goldbarDay) : null;
 
     const time = `${String(Math.min(23, Math.max(0, hour))).padStart(2, '0')}:${String(Math.min(59, Math.max(0, minute))).padStart(2, '0')}`;
@@ -96,7 +89,6 @@ function GameStart() {
       speedupH,
       incDays,
       incHours,
-      incMins,
       gbDay,
       existingMissions,
     );
@@ -199,7 +191,7 @@ function GameStart() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
               Następny dochód
             </h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-slate-400">Za ile dni?</label>
                 <input
@@ -219,18 +211,6 @@ function GameStart() {
                   max="23"
                   value={nextIncomeHours}
                   onChange={(e) => setNextIncomeHours(e.target.value)}
-                  placeholder="0"
-                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400">Za ile minut?</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={nextIncomeMinutes}
-                  onChange={(e) => setNextIncomeMinutes(e.target.value)}
                   placeholder="0"
                   className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
                 />

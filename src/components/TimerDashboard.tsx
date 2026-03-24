@@ -161,6 +161,7 @@ function TimerDashboard() {
                 isReady={incomeTimer.available}
                 onConfirm={handleConfirmIncome}
                 realTimeRemaining={incomeTimer.realTimeRemaining}
+                gameTimeRemaining={incomeTimer.gameTimeRemaining}
               />
             )}
             {goldbarTimer && (
@@ -204,6 +205,7 @@ function TimerDashboard() {
                   onConfirm={() => handleConfirmMission(mission.id)}
                   onDelete={() => handleConfirmMission(mission.id)}
                   realTimeRemaining={mission.realTimeRemaining}
+                  gameTimeRemaining={mission.gameTimeRemaining}
                 />
               ))}
             </div>

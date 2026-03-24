@@ -43,6 +43,7 @@ export interface IncomeTimer {
   nextTime: string;
   progress: number;
   realTimeRemaining: string | null;
+  gameTimeRemaining: string | null;
 }
 
 export interface GoldbarTimer {
@@ -61,6 +62,7 @@ export interface MissionTimer {
   available: boolean;
   progress: number;
   realTimeRemaining: string | null;
+  gameTimeRemaining: string | null;
 }
 
 interface UseGameTimerReturn {
@@ -174,7 +176,7 @@ const useGameTimer = (): UseGameTimerReturn => {
       const totalMins = 3 * 24 * 60;
       const elapsed = totalMins - (income.remainingMinutes ?? 0);
       const progress = calculateProgress(elapsed, totalMins);
-      const rtRemaining = !income.available
+      const incomeRtRemaining = !income.available
         ? formatMs(
             calculateRealTimeUntil(
               baselineRealTime,
@@ -185,13 +187,24 @@ const useGameTimer = (): UseGameTimerReturn => {
             ),
           )
         : null;
+      const incomeGameRemaining =
+        !income.available && (income.remainingMinutes ?? 0) > 0
+          ? (() => {
+              const rem = income.remainingMinutes ?? 0;
+              const d = Math.floor(rem / (24 * 60));
+              const h = Math.floor((rem % (24 * 60)) / 60);
+              const m = Math.floor(rem % 60);
+              return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`;
+            })()
+          : null;
       setIncomeTimer({
         available: income.available,
         remainingMinutes: income.remainingMinutes ?? 0,
         nextDay: income.nextDay,
         nextTime: income.nextTime,
         progress,
-        realTimeRemaining: rtRemaining,
+        realTimeRemaining: incomeRtRemaining,
+        gameTimeRemaining: incomeGameRemaining,
       });
       if (income.available && !playedSoundsRef.current.has('income')) {
         playSound();
@@ -257,6 +270,14 @@ const useGameTimer = (): UseGameTimerReturn => {
         playSound();
         playedSoundsRef.current.add(`mission-${mission.id}`);
       }
+      const gameRemaining =
+        !missionTime.available && missionTime.remainingMinutes > 0
+          ? (() => {
+              const h = Math.floor(missionTime.remainingMinutes / 60);
+              const m = Math.floor(missionTime.remainingMinutes % 60);
+              return `${h}h ${m}m`;
+            })()
+          : null;
       return {
         id: mission.id,
         type: mission.type,
@@ -265,6 +286,7 @@ const useGameTimer = (): UseGameTimerReturn => {
         available: missionTime.available,
         progress,
         realTimeRemaining: rtRemaining,
+        gameTimeRemaining: gameRemaining,
       };
     });
     setMissionTimers(newMissionTimers);
