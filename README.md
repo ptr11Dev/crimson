@@ -7,13 +7,13 @@ Zbudowana w **React Native + Expo SDK 55** (TypeScript).
 
 ## Wymagania
 
-| Narzędzie | Minimalna wersja |
-|---|---|
-| Node.js | 20.x |
-| npm | 10.x |
-| Expo CLI | instaluje się automatycznie przez `npx` |
-| iPhone | iOS 16+ |
-| Expo Go (App Store) | aktualna wersja |
+| Narzędzie           | Minimalna wersja                        |
+| ------------------- | --------------------------------------- |
+| Node.js             | 20.x                                    |
+| npm                 | 10.x                                    |
+| Expo CLI            | instaluje się automatycznie przez `npx` |
+| iPhone              | iOS 16+                                 |
+| Expo Go (App Store) | aktualna wersja                         |
 
 ---
 
@@ -43,7 +43,7 @@ Expo Go to darmowa aplikacja z App Store, która pozwala uruchomić projekt bezp
 
 3. W terminalu pojawi się QR kod oraz adres w stylu `exp://192.168.x.x:8081`.
 
-4. Na iPhonie otwórz aplikację **Expo Go** i zeskanuj QR aparatem (lub wklej adres ręcznie w zakładce *Enter URL manually*).
+4. Na iPhonie otwórz aplikację **Expo Go** i zeskanuj QR aparatem (lub wklej adres ręcznie w zakładce _Enter URL manually_).
 
 5. Przy pierwszym uruchomieniu iOS zapyta o zgodę na powiadomienia — **zatwierdź**, inaczej przypomnienia 5 minut przed końcem timerów nie zadziałają.
 
@@ -84,7 +84,7 @@ Wymaga macOS z zainstalowanym Xcode (bezpłatny z App Store).
 4. W Xcode:
    - Podłącz iPhone kablem USB
    - Wybierz swoje urządzenie jako target (nie symulator)
-   - W zakładce *Signing & Capabilities* wybierz swój Apple ID jako Team (Personal Team — bezpłatny)
+   - W zakładce _Signing & Capabilities_ wybierz swój Apple ID jako Team (Personal Team — bezpłatny)
    - Kliknij ▶ **Run**
 
 5. Po zainstalowaniu na telefonie uruchom serwer deweloperski:
@@ -93,7 +93,7 @@ Wymaga macOS z zainstalowanym Xcode (bezpłatny z App Store).
    npx expo start --dev-client
    ```
 
-6. Na telefonie otwórz zainstalowaną aplikację *Crimson Desert* — połączy się automatycznie z serwerem.
+6. Na telefonie otwórz zainstalowaną aplikację _Crimson Desert_ — połączy się automatycznie z serwerem.
 
 > **Uwaga:** Aplikacje podpisane bezpłatnym Personal Team wygasają po **7 dniach** i trzeba je ponownie wgrać przez Xcode.
 
@@ -137,11 +137,11 @@ EAS (Expo Application Services) buduje appkę w chmurze Expo.
 
 ## Skrypty npm
 
-| Komenda | Opis |
-|---|---|
-| `npm start` | Uruchamia serwer Expo (Expo Go) |
-| `npm run ios` | Uruchamia serwer + otwiera symulator iOS (wymaga Xcode) |
-| `npm run android` | Uruchamia serwer + otwiera emulator Android |
+| Komenda           | Opis                                                    |
+| ----------------- | ------------------------------------------------------- |
+| `npm start`       | Uruchamia serwer Expo (Expo Go)                         |
+| `npm run ios`     | Uruchamia serwer + otwiera symulator iOS (wymaga Xcode) |
+| `npm run android` | Uruchamia serwer + otwiera emulator Android             |
 
 ---
 
