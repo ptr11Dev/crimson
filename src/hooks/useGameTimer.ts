@@ -70,6 +70,7 @@ interface UseGameTimerReturn {
   goldbarTimer: GoldbarTimer | null;
   missionTimers: MissionTimer[];
   handleConfirmSpeedup: () => void;
+  handleResetSpeedup: () => void;
   handleConfirmIncome: () => void;
   handleConfirmGoldbar: () => void;
   handleConfirmMission: (missionId: number) => void;
@@ -86,6 +87,7 @@ const useGameTimer = (): UseGameTimerReturn => {
     lastGoldbarDay,
     missions,
     confirmSpeedup,
+    resetSpeedup,
     confirmIncome,
     confirmGoldbar,
     removeMission,
@@ -290,6 +292,10 @@ const useGameTimer = (): UseGameTimerReturn => {
     confirmSpeedup();
     playedSoundsRef.current.delete('speedup');
   };
+  const handleResetSpeedup = () => {
+    resetSpeedup();
+    playedSoundsRef.current.delete('speedup');
+  };
   const handleConfirmIncome = () => {
     confirmIncome();
     playedSoundsRef.current.delete('income');
@@ -312,6 +318,7 @@ const useGameTimer = (): UseGameTimerReturn => {
     goldbarTimer,
     missionTimers,
     handleConfirmSpeedup,
+    handleResetSpeedup,
     handleConfirmIncome,
     handleConfirmGoldbar,
     handleConfirmMission,

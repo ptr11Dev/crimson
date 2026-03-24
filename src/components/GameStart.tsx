@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useGameStore, { Mission } from '../store/gameStore';
+import { REAL_TO_GAME_RATIO } from '../constants';
 
 function GameStart() {
   const { sessionStartTime, startSession, savedSessionData, lastGoldbarDay } =
@@ -11,15 +12,27 @@ function GameStart() {
   const [nextSpeedupHours, setNextSpeedupHours] = useState<string>('10');
   const [nextIncomeDays, setNextIncomeDays] = useState<string>('');
   const [nextIncomeHours, setNextIncomeHours] = useState<string>('');
+  const [nextIncomeMinutes, setNextIncomeMinutes] = useState<string>('');
   const [goldbarDay, setGoldbarDay] = useState<string>('');
 
   // Auto-fill from persisted data on mount
   useEffect(() => {
+    if (savedSessionData?.lastGameDay != null) {
+      setGameDay(String(savedSessionData.lastGameDay));
+    }
+    if (savedSessionData?.lastGameTime != null) {
+      const [h, m] = savedSessionData.lastGameTime.split(':');
+      setGameHour(h);
+      setGameMinute(m);
+    }
     if (savedSessionData?.nextIncomeDays != null) {
       setNextIncomeDays(String(savedSessionData.nextIncomeDays));
     }
     if (savedSessionData?.nextIncomeHours != null) {
       setNextIncomeHours(String(savedSessionData.nextIncomeHours));
+    }
+    if (savedSessionData?.nextIncomeMinutes != null) {
+      setNextIncomeMinutes(String(savedSessionData.nextIncomeMinutes));
     }
     if (savedSessionData?.nextSpeedupHours != null) {
       setNextSpeedupHours(
@@ -39,30 +52,43 @@ function GameStart() {
     const speedupH = parseFloat(nextSpeedupHours) || 10;
     const incDays = nextIncomeDays.trim() ? parseInt(nextIncomeDays) : null;
     const incHours = nextIncomeHours.trim() ? parseInt(nextIncomeHours) : null;
+    const incMins = nextIncomeMinutes.trim()
+      ? parseInt(nextIncomeMinutes)
+      : null;
     const gbDay = goldbarDay.trim() ? parseInt(goldbarDay) : null;
 
     const time = `${String(Math.min(23, Math.max(0, hour))).padStart(2, '0')}:${String(Math.min(59, Math.max(0, minute))).padStart(2, '0')}`;
 
-    // Restore missions from saved session
+    // Restore missions from saved session.
+    // We keep the original durationHours and back-calculate startTime so that
+    // elapsed = durationHours - remainingHours → progress bar shows correct %.
+    const currentTotalMins =
+      (day - 1) * 24 * 60 + Math.min(23, hour) * 60 + Math.min(59, minute);
+
     const existingMissions: Mission[] = (
       savedSessionData?.remainingMissions ?? []
     )
       .filter((m) => m.remainingHours > 0)
-      .map((m) => ({
-        id: Date.now() + Math.random(),
-        type: m.type,
-        durationHours: m.durationHours,
-        startDay: day,
-        startTime: time,
-        startRealTime: Date.now(),
-        // We override durationHours so the end time = startTime + remainingHours
-        // by replacing durationHours with remainingHours for this restored mission
-      }))
-      .map((m, idx) => ({
-        ...m,
-        id: Date.now() + idx,
-        durationHours: savedSessionData!.remainingMissions[idx].remainingHours,
-      }));
+      .map((m, idx) => {
+        const elapsedMins = (m.durationHours - m.remainingHours) * 60;
+        const startTotalMins = currentTotalMins - elapsedMins;
+        const startDay = Math.max(
+          1,
+          Math.floor(startTotalMins / (24 * 60)) + 1,
+        );
+        const startTod = ((startTotalMins % (24 * 60)) + 24 * 60) % (24 * 60);
+        const startHour = Math.floor(startTod / 60);
+        const startMin = startTod % 60;
+        const missionStartTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+        return {
+          id: Date.now() + idx,
+          type: m.type,
+          durationHours: m.durationHours,
+          startDay,
+          startTime: missionStartTime,
+          startRealTime: Date.now(),
+        };
+      });
 
     startSession(
       day,
@@ -70,6 +96,7 @@ function GameStart() {
       speedupH,
       incDays,
       incHours,
+      incMins,
       gbDay,
       existingMissions,
     );
@@ -172,7 +199,7 @@ function GameStart() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
               Następny dochód
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-slate-400">Za ile dni?</label>
                 <input
@@ -192,6 +219,18 @@ function GameStart() {
                   max="23"
                   value={nextIncomeHours}
                   onChange={(e) => setNextIncomeHours(e.target.value)}
+                  placeholder="0"
+                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400">Za ile minut?</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={nextIncomeMinutes}
+                  onChange={(e) => setNextIncomeMinutes(e.target.value)}
                   placeholder="0"
                   className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
                 />
@@ -265,7 +304,8 @@ function GameStart() {
               in-game
             </li>
             <li>
-              ⏱ 5 min real = <span className="text-slate-400">1h</span> in-game
+              ⏱ {REAL_TO_GAME_RATIO} min real ={' '}
+              <span className="text-slate-400">1h</span> in-game
             </li>
           </ul>
         </div>

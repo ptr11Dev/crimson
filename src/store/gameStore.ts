@@ -30,7 +30,10 @@ export interface SavedSessionData {
   nextSpeedupHours: number | null;
   nextIncomeDays: number | null;
   nextIncomeHours: number | null;
+  nextIncomeMinutes: number | null;
   remainingMissions: SavedMission[];
+  lastGameDay: number | null;
+  lastGameTime: string | null;
 }
 
 interface GameState {
@@ -62,6 +65,7 @@ interface GameState {
     nextSpeedupHours: number,
     nextIncomeDays: number | null,
     nextIncomeHours: number | null,
+    nextIncomeMinutes: number | null,
     goldbarDay: number | null,
     existingMissions?: Mission[],
   ) => void;
@@ -69,6 +73,7 @@ interface GameState {
   updateCurrentGameTime: (day: number, time: string) => void;
   setLiveGameTime: (day: number, time: string) => void;
   confirmSpeedup: () => void;
+  resetSpeedup: () => void;
   confirmIncome: () => void;
   confirmGoldbar: () => void;
   addMission: (missionType: string, durationHours: number) => void;
@@ -124,7 +129,10 @@ const useGameStore = create<GameState>()(
         nextSpeedupHours: null,
         nextIncomeDays: null,
         nextIncomeHours: null,
+        nextIncomeMinutes: null,
         remainingMissions: [],
+        lastGameDay: null,
+        lastGameTime: null,
       },
 
       startSession: (
@@ -133,6 +141,7 @@ const useGameStore = create<GameState>()(
         nextSpeedupHours,
         nextIncomeDays,
         nextIncomeHours,
+        nextIncomeMinutes,
         goldbarDay,
         existingMissions = [],
       ) => {
@@ -149,11 +158,17 @@ const useGameStore = create<GameState>()(
           time: speedupNext.time,
         };
 
-        // Next income = current game time + (days * 24 + hours) game hours
+        // Next income = current game time + (days * 24 + hours + minutes/60)
         let lastIncome: IncomeTimestamp | null = null;
-        if (nextIncomeDays !== null || nextIncomeHours !== null) {
+        if (
+          nextIncomeDays !== null ||
+          nextIncomeHours !== null ||
+          nextIncomeMinutes !== null
+        ) {
           const totalMins =
-            ((nextIncomeDays ?? 0) * 24 + (nextIncomeHours ?? 0)) * 60;
+            (nextIncomeDays ?? 0) * 24 * 60 +
+            (nextIncomeHours ?? 0) * 60 +
+            (nextIncomeMinutes ?? 0);
           const incomeNext = addGameMinutes(gameDay, gameTime, totalMins);
           lastIncome = { day: incomeNext.day, time: incomeNext.time };
         }
@@ -190,6 +205,7 @@ const useGameStore = create<GameState>()(
         // --- next income remaining ---
         let nextIncomeDays: number | null = null;
         let nextIncomeHours: number | null = null;
+        let nextIncomeMinutes: number | null = null;
         if (state.lastIncome) {
           const remainingMins = diffGameMinutes(
             state.lastIncome.day,
@@ -200,6 +216,7 @@ const useGameStore = create<GameState>()(
           const remaining = Math.max(0, remainingMins);
           nextIncomeDays = Math.floor(remaining / (24 * 60));
           nextIncomeHours = Math.floor((remaining % (24 * 60)) / 60);
+          nextIncomeMinutes = remaining % 60;
         }
 
         // --- missions remaining ---
@@ -225,7 +242,10 @@ const useGameStore = create<GameState>()(
           nextSpeedupHours,
           nextIncomeDays,
           nextIncomeHours,
+          nextIncomeMinutes,
           remainingMissions,
+          lastGameDay: state.currentGameDay,
+          lastGameTime: state.currentGameTime,
         };
 
         set({
@@ -258,6 +278,25 @@ const useGameStore = create<GameState>()(
 
       confirmSpeedup: () => {
         const { currentGameDay, currentGameTime } = get();
+        // Speedup advances in-game time by 12h — update the baseline so the
+        // live clock immediately reflects the jump.
+        const jumped = addGameMinutes(currentGameDay, currentGameTime, 12 * 60);
+        const now = Date.now();
+        // Next speedup is 10h after the new (post-jump) game time.
+        const next = addGameMinutes(jumped.day, jumped.time, 10 * 60);
+        set({
+          baselineRealTime: now,
+          baselineGameDay: jumped.day,
+          baselineGameTime: jumped.time,
+          currentGameDay: jumped.day,
+          currentGameTime: jumped.time,
+          lastSpeedup: { day: next.day, time: next.time },
+        });
+      },
+
+      resetSpeedup: () => {
+        const { currentGameDay, currentGameTime } = get();
+        // Reset timer to 10h from now — no game time jump
         const next = addGameMinutes(currentGameDay, currentGameTime, 10 * 60);
         set({ lastSpeedup: { day: next.day, time: next.time } });
       },

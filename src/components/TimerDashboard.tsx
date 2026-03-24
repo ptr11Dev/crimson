@@ -13,6 +13,7 @@ function TimerDashboard() {
     goldbarTimer,
     missionTimers,
     handleConfirmSpeedup,
+    handleResetSpeedup,
     handleConfirmIncome,
     handleConfirmGoldbar,
     handleConfirmMission,
@@ -136,7 +137,7 @@ function TimerDashboard() {
             Akcje Cykliczne
             <span className="flex-1 h-px bg-slate-700" />
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
             {speedupTimer && (
               <Timer
                 icon="⚡"
@@ -146,6 +147,7 @@ function TimerDashboard() {
                 currentProgress={speedupTimer.progress}
                 isReady={speedupTimer.available}
                 onConfirm={handleConfirmSpeedup}
+                onReset={handleResetSpeedup}
                 realTimeRemaining={speedupTimer.realTimeRemaining}
               />
             )}
@@ -189,7 +191,7 @@ function TimerDashboard() {
               Brak aktywnych misji
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mt-3">
               {missionTimers.map((mission) => (
                 <Timer
                   key={mission.id}
@@ -200,6 +202,7 @@ function TimerDashboard() {
                   currentProgress={mission.progress}
                   isReady={mission.available}
                   onConfirm={() => handleConfirmMission(mission.id)}
+                  onDelete={() => handleConfirmMission(mission.id)}
                   realTimeRemaining={mission.realTimeRemaining}
                 />
               ))}
