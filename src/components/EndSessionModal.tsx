@@ -1,55 +1,101 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import useGameStore from '../store/gameStore';
+import { cancelAllNotifications } from '../services/notificationService';
 
 interface Props {
   onClose: () => void;
 }
 
-function EndSessionModal({ onClose }: Props) {
+export default function EndSessionModal({ onClose }: Props) {
   const { endSession } = useGameStore();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    await cancelAllNotifications();
     endSession();
     onClose();
-    // Zustand reaktywnie przełącza widok przez sessionStartTime = null
-    // Nie ma potrzeby przeładowania strony
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-lg font-bold text-slate-100 mb-2">
-          Zakończyć sesję?
-        </h2>
-        <p className="text-slate-400 text-sm mb-1">
-          Stan timerów zostanie zapisany i wczytany przy następnym starcie.
-        </p>
-        <p className="text-slate-500 text-xs mb-6">
-          Goldbar i czasy dochodów / misji są zachowane w localStorage.
-        </p>
+    <Modal transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <View style={styles.card}>
+              <Text style={styles.title}>Zakończyć sesję?</Text>
+              <Text style={styles.body}>
+                Stan timerów zostanie zapisany i wczytany przy następnym starcie.
+              </Text>
+              <Text style={styles.sub}>
+                Goldbar i czasy dochodów / misji są zachowane lokalnie.
+              </Text>
 
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-2.5 text-sm font-semibold transition-colors cursor-pointer"
-          >
-            Anuluj
-          </button>
-          <button
-            onClick={handleConfirm}
-            className="flex-1 bg-red-600 hover:bg-red-500 text-white rounded-lg py-2.5 text-sm font-bold transition-colors cursor-pointer"
-          >
-            Tak, zakończ
-          </button>
-        </div>
-      </div>
-    </div>
+              <View style={styles.buttons}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                  <Text style={styles.cancelText}>Anuluj</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={handleConfirm}
+                >
+                  <Text style={styles.confirmText}>Tak, zakończ</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 }
 
-export default EndSessionModal;
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  title: { fontSize: 18, fontWeight: 'bold', color: '#f1f5f9', marginBottom: 8 },
+  body: { fontSize: 14, color: '#94a3b8', marginBottom: 4 },
+  sub: { fontSize: 12, color: '#64748b', marginBottom: 24 },
+  buttons: { flexDirection: 'row', gap: 12 },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#1e293b',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  cancelText: { color: '#cbd5e1', fontWeight: '600' },
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: '#dc2626',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  confirmText: { color: '#fff', fontWeight: 'bold' },
+});

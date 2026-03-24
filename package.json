@@ -1,33 +1,26 @@
 {
   "name": "crimson-desert",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "main": "index.ts",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
   },
   "dependencies": {
-    "dayjs": "^1.11.20",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zustand": "^5.0.12"
+    "expo": "~55.0.8",
+    "expo-status-bar": "~55.0.4",
+    "expo-notifications": "~0.31.0",
+    "expo-linear-gradient": "~14.1.4",
+    "@react-native-async-storage/async-storage": "~2.2.0",
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "zustand": "^5.0.4",
+    "dayjs": "^1.11.13"
   },
   "devDependencies": {
-    "@eslint/js": "^9.13.0",
-    "@tailwindcss/vite": "^4.2.2",
-    "@types/react": "^18.3.28",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.3.3",
-    "eslint": "^9.13.0",
-    "eslint-plugin-react": "^7.37.2",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.14",
-    "globals": "^15.11.0",
-    "tailwindcss": "^4.2.2",
-    "typescript": "^5.9.3",
-    "vite": "^5.4.10"
-  }
+    "@types/react": "~19.2.2",
+    "typescript": "~5.9.2"
+  },
+  "private": true
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import useGameStore from '../store/gameStore';
@@ -14,7 +15,10 @@ import {
   formatGameDateTime,
   GameTime,
 } from '../utils/timeCalculator';
-import notificationSound from '../assets/sounds/notification.mp3';
+import {
+  scheduleTimerNotification,
+  cancelTimerNotification,
+} from '../services/notificationService';
 
 dayjs.extend(duration);
 
@@ -102,22 +106,18 @@ const useGameTimer = (): UseGameTimerReturn => {
   const [goldbarTimer, setGoldbarTimer] = useState<GoldbarTimer | null>(null);
   const [missionTimers, setMissionTimers] = useState<MissionTimer[]>([]);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playedSoundsRef = useRef<Set<string>>(new Set());
+  // Track which timers already had notifications scheduled so we don't
+  // re-schedule on every tick — only once per timer per cycle.
+  const notifScheduledRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    audioRef.current = new Audio(notificationSound);
-    audioRef.current.volume = 0.5;
-  }, []);
-
-  const playSound = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        /* browser autoplay policy */
-      });
-    }
-  }, []);
+  const scheduleIfNeeded = useCallback(
+    async (timerId: string, endTimestampMs: number, label: string) => {
+      if (notifScheduledRef.current.has(timerId)) return;
+      notifScheduledRef.current.add(timerId);
+      await scheduleTimerNotification(timerId, endTimestampMs, label);
+    },
+    [],
+  );
 
   const tick = useCallback(() => {
     if (!sessionStartTime || !baselineRealTime) return;
@@ -130,7 +130,7 @@ const useGameTimer = (): UseGameTimerReturn => {
     setCurrentTime(gameTime);
     setLiveGameTime(gameTime.day, gameTime.time);
 
-    // ── Speedup ────────────────────────────────────────────────────────
+    // Speedup
     const speedup = calculateSpeedupRemaining(
       lastSpeedup,
       gameTime.day,
@@ -140,32 +140,29 @@ const useGameTimer = (): UseGameTimerReturn => {
       const totalMins = 10 * 60;
       const elapsed = totalMins - speedup.remainingMinutes;
       const progress = calculateProgress(elapsed, totalMins);
-      const rtRemaining = !speedup.available
-        ? formatMs(
-            calculateRealTimeUntil(
-              baselineRealTime,
-              baselineGameDay,
-              baselineGameTime,
-              speedup.nextDay,
-              speedup.nextTime,
-            ),
+      const msUntil = !speedup.available
+        ? calculateRealTimeUntil(
+            baselineRealTime,
+            baselineGameDay,
+            baselineGameTime,
+            speedup.nextDay,
+            speedup.nextTime,
           )
-        : null;
+        : 0;
       setSpeedupTimer({
         available: speedup.available,
         remainingMinutes: speedup.remainingMinutes,
         nextDay: speedup.nextDay,
         nextTime: speedup.nextTime,
         progress,
-        realTimeRemaining: rtRemaining,
+        realTimeRemaining: !speedup.available ? formatMs(msUntil) : null,
       });
-      if (speedup.available && !playedSoundsRef.current.has('speedup')) {
-        playSound();
-        playedSoundsRef.current.add('speedup');
+      if (!speedup.available) {
+        scheduleIfNeeded('speedup', Date.now() + msUntil, 'Przyspieszenie Czasu');
       }
     }
 
-    // ── Income ──────────────────────────────────────────────────────────
+    // Income
     const income = calculateIncomeRemaining(
       lastIncome?.day,
       gameTime.day,
@@ -176,25 +173,23 @@ const useGameTimer = (): UseGameTimerReturn => {
       const totalMins = 3 * 24 * 60;
       const elapsed = totalMins - (income.remainingMinutes ?? 0);
       const progress = calculateProgress(elapsed, totalMins);
-      const incomeRtRemaining = !income.available
-        ? formatMs(
-            calculateRealTimeUntil(
-              baselineRealTime,
-              baselineGameDay,
-              baselineGameTime,
-              income.nextDay,
-              income.nextTime,
-            ),
+      const msUntilIncome = !income.available
+        ? calculateRealTimeUntil(
+            baselineRealTime,
+            baselineGameDay,
+            baselineGameTime,
+            income.nextDay,
+            income.nextTime,
           )
-        : null;
+        : 0;
       const incomeGameRemaining =
         !income.available && (income.remainingMinutes ?? 0) > 0
           ? (() => {
               const rem = income.remainingMinutes ?? 0;
-              const d = Math.floor(rem / (24 * 60));
+              const days = Math.floor(rem / (24 * 60));
               const h = Math.floor((rem % (24 * 60)) / 60);
               const m = Math.floor(rem % 60);
-              return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`;
+              return days > 0 ? `${days}d ${h}h ${m}m` : `${h}h ${m}m`;
             })()
           : null;
       setIncomeTimer({
@@ -203,46 +198,46 @@ const useGameTimer = (): UseGameTimerReturn => {
         nextDay: income.nextDay,
         nextTime: income.nextTime,
         progress,
-        realTimeRemaining: incomeRtRemaining,
+        realTimeRemaining: !income.available ? formatMs(msUntilIncome) : null,
         gameTimeRemaining: incomeGameRemaining,
       });
-      if (income.available && !playedSoundsRef.current.has('income')) {
-        playSound();
-        playedSoundsRef.current.add('income');
+      if (!income.available) {
+        scheduleIfNeeded('income', Date.now() + msUntilIncome, 'Pobranie Dochodu');
       }
     }
 
-    // ── Goldbar ─────────────────────────────────────────────────────────
+    // Goldbar
     const goldbar = calculateGoldbarRemaining(lastGoldbarDay, gameTime.day);
     if (goldbar.nextDay !== undefined) {
       const totalDays = 7;
       const elapsed = totalDays - goldbar.remainingDays;
       const progress = calculateProgress(elapsed, totalDays);
-      const rtRemaining = !goldbar.available
-        ? formatMs(
-            calculateRealTimeUntil(
-              baselineRealTime,
-              baselineGameDay,
-              baselineGameTime,
-              goldbar.nextDay,
-              '00:00',
-            ),
+      const msUntilGoldbar = !goldbar.available
+        ? calculateRealTimeUntil(
+            baselineRealTime,
+            baselineGameDay,
+            baselineGameTime,
+            goldbar.nextDay,
+            '00:00',
           )
-        : null;
+        : 0;
       setGoldbarTimer({
         available: goldbar.available,
         remainingDays: goldbar.remainingDays,
         nextDay: goldbar.nextDay,
         progress,
-        realTimeRemaining: rtRemaining,
+        realTimeRemaining: !goldbar.available ? formatMs(msUntilGoldbar) : null,
       });
-      if (goldbar.available && !playedSoundsRef.current.has('goldbar')) {
-        playSound();
-        playedSoundsRef.current.add('goldbar');
+      if (!goldbar.available) {
+        scheduleIfNeeded(
+          'goldbar',
+          Date.now() + msUntilGoldbar,
+          'Goldbar — Lioncrest Manor',
+        );
       }
     }
 
-    // ── Missions ─────────────────────────────────────────────────────────
+    // Missions
     const newMissionTimers: MissionTimer[] = missions.map((mission) => {
       const missionTime = calculateMissionRemaining(
         mission,
@@ -252,23 +247,21 @@ const useGameTimer = (): UseGameTimerReturn => {
       const totalMins = mission.durationHours * 60;
       const elapsed = totalMins - missionTime.remainingMinutes;
       const progress = calculateProgress(elapsed, totalMins);
-      const rtRemaining = !missionTime.available
-        ? formatMs(
-            calculateRealTimeUntil(
-              baselineRealTime,
-              baselineGameDay,
-              baselineGameTime,
-              missionTime.endDay,
-              missionTime.endTime,
-            ),
+      const msUntilMission = !missionTime.available
+        ? calculateRealTimeUntil(
+            baselineRealTime,
+            baselineGameDay,
+            baselineGameTime,
+            missionTime.endDay,
+            missionTime.endTime,
           )
-        : null;
-      if (
-        missionTime.available &&
-        !playedSoundsRef.current.has(`mission-${mission.id}`)
-      ) {
-        playSound();
-        playedSoundsRef.current.add(`mission-${mission.id}`);
+        : 0;
+      if (!missionTime.available) {
+        scheduleIfNeeded(
+          `mission-${mission.id}`,
+          Date.now() + msUntilMission,
+          mission.type,
+        );
       }
       const gameRemaining =
         !missionTime.available && missionTime.remainingMinutes > 0
@@ -285,7 +278,7 @@ const useGameTimer = (): UseGameTimerReturn => {
         endTime: missionTime.endTime,
         available: missionTime.available,
         progress,
-        realTimeRemaining: rtRemaining,
+        realTimeRemaining: !missionTime.available ? formatMs(msUntilMission) : null,
         gameTimeRemaining: gameRemaining,
       };
     });
@@ -299,36 +292,60 @@ const useGameTimer = (): UseGameTimerReturn => {
     lastIncome,
     lastGoldbarDay,
     missions,
-    playSound,
+    scheduleIfNeeded,
     setLiveGameTime,
   ]);
 
+  // Only tick while app is active; notifications fire independently in background
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      appStateRef.current = next;
+      if (next === 'active') {
+        // Returning to foreground: clear scheduled set so notifications
+        // are re-evaluated and rescheduled with fresh timestamps
+        notifScheduledRef.current.clear();
+        tick();
+      }
+    });
+    return () => sub.remove();
+  }, [tick]);
+
   useEffect(() => {
     if (!sessionStartTime || !baselineRealTime) return;
+    notifScheduledRef.current.clear();
     tick();
-    const interval = setInterval(tick, TIMER_REFRESH_INTERVAL);
+    const interval = setInterval(() => {
+      if (appStateRef.current === 'active') tick();
+    }, TIMER_REFRESH_INTERVAL);
     return () => clearInterval(interval);
   }, [sessionStartTime, baselineRealTime, tick]);
 
   const handleConfirmSpeedup = () => {
+    cancelTimerNotification('speedup');
+    notifScheduledRef.current.delete('speedup');
     confirmSpeedup();
-    playedSoundsRef.current.delete('speedup');
   };
   const handleResetSpeedup = () => {
+    cancelTimerNotification('speedup');
+    notifScheduledRef.current.delete('speedup');
     resetSpeedup();
-    playedSoundsRef.current.delete('speedup');
   };
   const handleConfirmIncome = () => {
+    cancelTimerNotification('income');
+    notifScheduledRef.current.delete('income');
     confirmIncome();
-    playedSoundsRef.current.delete('income');
   };
   const handleConfirmGoldbar = () => {
+    cancelTimerNotification('goldbar');
+    notifScheduledRef.current.delete('goldbar');
     confirmGoldbar();
-    playedSoundsRef.current.delete('goldbar');
   };
   const handleConfirmMission = (missionId: number) => {
+    cancelTimerNotification(`mission-${missionId}`);
+    notifScheduledRef.current.delete(`mission-${missionId}`);
     removeMission(missionId);
-    playedSoundsRef.current.delete(`mission-${missionId}`);
   };
 
   return {

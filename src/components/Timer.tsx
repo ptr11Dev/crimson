@@ -1,3 +1,11 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { formatGameDateTime } from '../utils/timeCalculator';
 
 interface TimerProps {
@@ -14,23 +22,23 @@ interface TimerProps {
   gameTimeRemaining?: string | null;
 }
 
-function getProgressGradient(pct: number): string {
-  if (pct >= 100) return 'linear-gradient(to right, #16a34a, #22c55e)';
+function getProgressColors(pct: number): [string, string] {
+  if (pct >= 100) return ['#16a34a', '#22c55e'];
   if (pct >= 50) {
     const t = (pct - 50) / 50;
     const r = Math.round(234 - t * (234 - 34));
     const g = Math.round(179 + t * (197 - 179));
     const b = Math.round(8 + t * (94 - 8));
-    return `linear-gradient(to right, #ef4444, #eab308, rgb(${r},${g},${b}))`;
+    return ['#ef4444', `rgb(${r},${g},${b})`];
   }
   const t = pct / 50;
   const r = Math.round(239 - t * (239 - 234));
   const g = Math.round(68 + t * (179 - 68));
   const b = Math.round(68 - t * (68 - 8));
-  return `linear-gradient(to right, #ef4444, rgb(${r},${g},${b}))`;
+  return ['#ef4444', `rgb(${r},${g},${b})`];
 }
 
-function Timer({
+export default function Timer({
   title,
   icon,
   targetDay,
@@ -44,107 +52,133 @@ function Timer({
   gameTimeRemaining,
 }: TimerProps) {
   const pct = Math.min(100, Math.max(0, currentProgress));
+  const [colorA, colorB] = getProgressColors(pct);
 
   return (
-    <div
-      className={`
-        flex flex-col gap-1.5 rounded-lg border px-3 py-2.5
-        bg-slate-900 transition-all duration-300
-        ${
-          isReady
-            ? 'border-emerald-500 ready-glow'
-            : 'border-slate-700 hover:border-slate-600'
-        }
-      `}
-    >
-      {/* Row 1: icon + title + ready badge + delete */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-sm shrink-0">{icon}</span>
-          <span className="text-xs font-semibold text-slate-300 truncate">
+    <View style={[styles.card, isReady && styles.cardReady]}>
+      {/* Row 1: icon + title + badges + action buttons */}
+      <View style={styles.row}>
+        <View style={styles.titleGroup}>
+          <Text style={styles.icon}>{icon}</Text>
+          <Text style={styles.title} numberOfLines={1}>
             {title}
-          </span>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
+          </Text>
+        </View>
+        <View style={styles.actions}>
           {isReady && (
-            <span className="rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold text-black uppercase tracking-wide">
-              GOTOWE
-            </span>
+            <View style={styles.readyBadge}>
+              <Text style={styles.readyText}>GOTOWE</Text>
+            </View>
           )}
           {onReset && (
-            <button
-              onClick={onReset}
-              title="Zrestartuj timer"
-              className="text-slate-500 hover:text-amber-400 transition-colors cursor-pointer text-sm leading-none px-0.5"
-            >
-              ↺
-            </button>
+            <TouchableOpacity onPress={onReset} style={styles.iconBtn}>
+              <Text style={styles.iconBtnText}>↺</Text>
+            </TouchableOpacity>
           )}
           {onDelete && (
-            <button
-              onClick={onDelete}
-              title="Usuń misję"
-              className="text-slate-600 hover:text-red-400 transition-colors cursor-pointer text-xs leading-none px-0.5"
-            >
-              ✕
-            </button>
+            <TouchableOpacity onPress={onDelete} style={styles.iconBtn}>
+              <Text style={styles.deleteBtnText}>✕</Text>
+            </TouchableOpacity>
           )}
-        </div>
-      </div>
+        </View>
+      </View>
 
       {/* Row 2: target time + countdowns */}
-      <div className="flex items-start justify-between gap-2">
-        <span
-          className={`font-mono font-bold text-sm leading-none ${
-            isReady ? 'text-emerald-400' : 'text-slate-200'
-          }`}
-        >
+      <View style={styles.row}>
+        <Text style={[styles.targetTime, isReady && styles.targetTimeReady]}>
           {formatGameDateTime(targetDay, targetTime)}
-        </span>
+        </Text>
         {!isReady && (realTimeRemaining || gameTimeRemaining) && (
-          <div className="flex flex-col items-end gap-0.5">
+          <View style={styles.countdowns}>
             {realTimeRemaining && (
-              <span className="font-mono text-amber-400 text-[11px] leading-none shrink-0">
-                ⏱ {realTimeRemaining}
-              </span>
+              <Text style={styles.realTime}>⏱ {realTimeRemaining}</Text>
             )}
             {gameTimeRemaining && (
-              <span className="font-mono text-sky-400 text-[11px] leading-none shrink-0">
-                🎮 {gameTimeRemaining}
-              </span>
+              <Text style={styles.gameTime}>🎮 {gameTimeRemaining}</Text>
             )}
-          </div>
+          </View>
         )}
-      </div>
+      </View>
 
-      {/* Row 3: progress bar + % + button */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
-          <div
-            className="progress-bar-fill h-full"
-            style={{ width: `${pct}%`, background: getProgressGradient(pct) }}
+      {/* Row 3: progress bar + % + confirm button */}
+      <View style={styles.row}>
+        <View style={styles.progressTrack}>
+          <LinearGradient
+            colors={[colorA, colorB]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.progressFill, { width: `${pct}%` }]}
           />
-        </div>
-        <span className="text-[10px] font-mono text-slate-500 w-8 text-right shrink-0">
-          {pct.toFixed(0)}%
-        </span>
-        <button
-          onClick={onConfirm}
+        </View>
+        <Text style={styles.pct}>{pct.toFixed(0)}%</Text>
+        <TouchableOpacity
+          onPress={onConfirm}
           disabled={!isReady}
-          className={`
-            shrink-0 rounded px-2 py-0.5 text-xs font-bold transition-all duration-200
-            ${
-              isReady
-                ? 'bg-emerald-500 text-black hover:bg-emerald-400 active:scale-95 cursor-pointer'
-                : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-            }
-          `}
+          style={[styles.confirmBtn, isReady ? styles.confirmBtnReady : styles.confirmBtnDisabled]}
         >
-          ✓
-        </button>
-      </div>
-    </div>
+          <Text style={[styles.confirmBtnText, !isReady && styles.confirmBtnTextDisabled]}>
+            ✓
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-export default Timer;
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#0f172a',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 10,
+    gap: 8,
+  },
+  cardReady: {
+    borderColor: '#10b981',
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  titleGroup: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 },
+  icon: { fontSize: 14 },
+  title: { fontSize: 12, fontWeight: '600', color: '#cbd5e1', flex: 1 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  readyBadge: {
+    backgroundColor: '#10b981',
+    borderRadius: 99,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  readyText: { fontSize: 9, fontWeight: 'bold', color: '#000' },
+  iconBtn: { padding: 2 },
+  iconBtnText: { fontSize: 14, color: '#64748b' },
+  deleteBtnText: { fontSize: 11, color: '#64748b' },
+  targetTime: { fontSize: 13, fontWeight: 'bold', color: '#e2e8f0', flex: 1 },
+  targetTimeReady: { color: '#34d399' },
+  countdowns: { alignItems: 'flex-end', gap: 2 },
+  realTime: { fontSize: 11, color: '#fbbf24' },
+  gameTime: { fontSize: 11, color: '#38bdf8' },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#1e293b',
+    borderRadius: 99,
+    overflow: 'hidden',
+  },
+  progressFill: { height: '100%', borderRadius: 99 },
+  pct: { fontSize: 10, color: '#64748b', width: 32, textAlign: 'right' },
+  confirmBtn: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
+  confirmBtnReady: { backgroundColor: '#10b981' },
+  confirmBtnDisabled: { backgroundColor: '#1e293b' },
+  confirmBtnText: { fontSize: 12, fontWeight: 'bold', color: '#000' },
+  confirmBtnTextDisabled: { color: '#475569' },
+});

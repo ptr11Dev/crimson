@@ -1,39 +1,69 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import useGameStore from '../store/gameStore';
 
-function MissionManager() {
+export default function MissionManager() {
   const { addMission } = useGameStore();
-  const [hours, setHours] = useState<string>('');
+  const [hours, setHours] = useState('');
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdd = () => {
     const h = parseFloat(hours);
     if (!h || h <= 0) return;
     addMission(`Misja ${h}h`, h);
     setHours('');
   };
 
+  const valid = !!hours && parseFloat(hours) > 0;
+
   return (
-    <form onSubmit={handleAdd} className="flex gap-2">
-      <input
-        type="number"
-        min="1"
-        max="48"
-        step="1"
+    <View style={styles.row}>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
         value={hours}
-        onChange={(e) => setHours(e.target.value)}
-        placeholder="Czas misji (godziny in-game)"
-        className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
+        onChangeText={setHours}
+        placeholder="Czas misji (godz. in-game)"
+        placeholderTextColor="#475569"
       />
-      <button
-        type="submit"
-        disabled={!hours || parseFloat(hours) <= 0}
-        className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-black font-bold rounded-lg px-4 py-2 text-sm transition-colors cursor-pointer disabled:cursor-not-allowed"
+      <TouchableOpacity
+        onPress={handleAdd}
+        disabled={!valid}
+        style={[styles.btn, !valid && styles.btnDisabled]}
       >
-        + Dodaj
-      </button>
-    </form>
+        <Text style={[styles.btnText, !valid && styles.btnTextDisabled]}>
+          + Dodaj
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
-export default MissionManager;
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 10 },
+  input: {
+    flex: 1,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: '#e2e8f0',
+  },
+  btn: {
+    backgroundColor: '#059669',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+  },
+  btnDisabled: { backgroundColor: '#1e293b' },
+  btnText: { color: '#000', fontWeight: 'bold', fontSize: 14 },
+  btnTextDisabled: { color: '#475569' },
+});

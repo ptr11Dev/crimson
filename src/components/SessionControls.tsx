@@ -1,20 +1,31 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import EndSessionModal from './EndSessionModal';
 
-function SessionControls() {
+export default function SessionControls() {
   const [showModal, setShowModal] = useState(false);
 
   return (
-    <>
-      <button
-        onClick={() => setShowModal(true)}
-        className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 text-red-400 hover:text-red-300 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 cursor-pointer"
+    <View>
+      <TouchableOpacity
+        style={styles.btn}
+        onPress={() => setShowModal(true)}
       >
-        🚪 Zakończ sesję
-      </button>
+        <Text style={styles.btnText}>🚪 Zakończ sesję</Text>
+      </TouchableOpacity>
       {showModal && <EndSessionModal onClose={() => setShowModal(false)} />}
-    </>
+    </View>
   );
 }
 
-export default SessionControls;
+const styles = StyleSheet.create({
+  btn: {
+    backgroundColor: '#1f0a0a',
+    borderWidth: 1,
+    borderColor: '#991b1b',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  btnText: { color: '#f87171', fontWeight: '600', fontSize: 14 },
+});

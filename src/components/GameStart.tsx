@@ -1,20 +1,29 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import useGameStore, { Mission } from '../store/gameStore';
 import { REAL_TO_GAME_RATIO } from '../constants';
 
-function GameStart() {
+export default function GameStart() {
   const { sessionStartTime, startSession, savedSessionData, lastGoldbarDay } =
     useGameStore();
 
-  const [gameDay, setGameDay] = useState<string>('1');
-  const [gameHour, setGameHour] = useState<string>('0');
-  const [gameMinute, setGameMinute] = useState<string>('0');
-  const [nextSpeedupHours, setNextSpeedupHours] = useState<string>('10');
-  const [nextIncomeDays, setNextIncomeDays] = useState<string>('');
-  const [nextIncomeHours, setNextIncomeHours] = useState<string>('');
-  const [goldbarDay, setGoldbarDay] = useState<string>('');
+  const [gameDay, setGameDay] = useState('1');
+  const [gameHour, setGameHour] = useState('0');
+  const [gameMinute, setGameMinute] = useState('0');
+  const [nextSpeedupHours, setNextSpeedupHours] = useState('10');
+  const [nextIncomeDays, setNextIncomeDays] = useState('');
+  const [nextIncomeHours, setNextIncomeHours] = useState('');
+  const [goldbarDay, setGoldbarDay] = useState('');
 
-  // Auto-fill from persisted data on mount
   useEffect(() => {
     if (savedSessionData?.lastGameDay != null) {
       setGameDay(String(savedSessionData.lastGameDay));
@@ -31,267 +40,273 @@ function GameStart() {
       setNextIncomeHours(String(savedSessionData.nextIncomeHours));
     }
     if (savedSessionData?.nextSpeedupHours != null) {
-      setNextSpeedupHours(
-        String(Math.round(savedSessionData.nextSpeedupHours)),
-      );
+      setNextSpeedupHours(String(Math.round(savedSessionData.nextSpeedupHours)));
     }
     if (lastGoldbarDay != null) {
       setGoldbarDay(String(lastGoldbarDay));
     }
   }, [savedSessionData, lastGoldbarDay]);
 
-  const handleStart = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStart = () => {
     const day = parseInt(gameDay) || 1;
-    const hour = parseInt(gameHour) || 0;
-    const minute = parseInt(gameMinute) || 0;
+    const hour = Math.min(23, Math.max(0, parseInt(gameHour) || 0));
+    const minute = Math.min(59, Math.max(0, parseInt(gameMinute) || 0));
     const speedupH = parseFloat(nextSpeedupHours) || 10;
     const incDays = nextIncomeDays.trim() ? parseInt(nextIncomeDays) : null;
     const incHours = nextIncomeHours.trim() ? parseInt(nextIncomeHours) : null;
     const gbDay = goldbarDay.trim() ? parseInt(goldbarDay) : null;
 
-    const time = `${String(Math.min(23, Math.max(0, hour))).padStart(2, '0')}:${String(Math.min(59, Math.max(0, minute))).padStart(2, '0')}`;
+    const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    const currentTotalMins = (day - 1) * 24 * 60 + hour * 60 + minute;
 
-    // Restore missions from saved session.
-    // We keep the original durationHours and back-calculate startTime so that
-    // elapsed = durationHours - remainingHours → progress bar shows correct %.
-    const currentTotalMins =
-      (day - 1) * 24 * 60 + Math.min(23, hour) * 60 + Math.min(59, minute);
-
-    const existingMissions: Mission[] = (
-      savedSessionData?.remainingMissions ?? []
-    )
+    const existingMissions: Mission[] = (savedSessionData?.remainingMissions ?? [])
       .filter((m) => m.remainingHours > 0)
       .map((m, idx) => {
         const elapsedMins = (m.durationHours - m.remainingHours) * 60;
         const startTotalMins = currentTotalMins - elapsedMins;
-        const startDay = Math.max(
-          1,
-          Math.floor(startTotalMins / (24 * 60)) + 1,
-        );
+        const startDay = Math.max(1, Math.floor(startTotalMins / (24 * 60)) + 1);
         const startTod = ((startTotalMins % (24 * 60)) + 24 * 60) % (24 * 60);
         const startHour = Math.floor(startTod / 60);
         const startMin = startTod % 60;
-        const missionStartTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
         return {
           id: Date.now() + idx,
           type: m.type,
           durationHours: m.durationHours,
           startDay,
-          startTime: missionStartTime,
+          startTime: `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`,
           startRealTime: Date.now(),
         };
       });
 
-    startSession(
-      day,
-      time,
-      speedupH,
-      incDays,
-      incHours,
-      gbDay,
-      existingMissions,
-    );
+    startSession(day, time, speedupH, incDays, incHours, gbDay, existingMissions);
   };
 
   if (sessionStartTime) return null;
 
-  const hasSavedMissions =
-    (savedSessionData?.remainingMissions ?? []).filter(
-      (m) => m.remainingHours > 0,
-    ).length > 0;
+  const savedMissionCount = (savedSessionData?.remainingMissions ?? []).filter(
+    (m) => m.remainingHours > 0,
+  ).length;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo / title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-emerald-400 tracking-tight">
-            ⚔️ Crimson Desert
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Timer Tracker — Nowa sesja
-          </p>
-        </div>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>⚔️ Crimson Desert</Text>
+          <Text style={styles.subtitle}>Timer Tracker — Nowa sesja</Text>
+        </View>
 
-        <form
-          onSubmit={handleStart}
-          className="bg-slate-900 border border-slate-700 rounded-2xl p-6 flex flex-col gap-6"
-        >
-          {/* Current game time */}
-          <section>
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
-              Bieżący czas w grze
-            </h2>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400">Dzień</label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={gameDay}
-                  onChange={(e) => setGameDay(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400">Godzina</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="23"
-                  required
-                  value={gameHour}
-                  onChange={(e) => setGameHour(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400">Minuta</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  required
-                  value={gameMinute}
-                  onChange={(e) => setGameMinute(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-            </div>
-          </section>
+        <View style={styles.card}>
+          {/* Game time */}
+          <Text style={styles.sectionLabel}>Bieżący czas w grze</Text>
+          <View style={styles.row3}>
+            <View style={styles.flex}>
+              <Text style={styles.inputLabel}>Dzień</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={gameDay}
+                onChangeText={setGameDay}
+                placeholderTextColor="#475569"
+              />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.inputLabel}>Godzina</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={gameHour}
+                onChangeText={setGameHour}
+                placeholderTextColor="#475569"
+              />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.inputLabel}>Minuta</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={gameMinute}
+                onChangeText={setGameMinute}
+                placeholderTextColor="#475569"
+              />
+            </View>
+          </View>
 
           {/* Speedup */}
-          <section>
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
-              Przyspieszenie czasu
-            </h2>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-400">
-                Ile godzin (in-game) do następnego?
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="0.5"
-                value={nextSpeedupHours}
-                onChange={(e) => setNextSpeedupHours(e.target.value)}
-                className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-              />
-              <p className="text-xs text-slate-600">
-                Domyślnie 10h (cykl resetuje się po wykonaniu)
-              </p>
-            </div>
-          </section>
+          <Text style={[styles.sectionLabel, styles.sectionGap]}>
+            Przyspieszenie czasu
+          </Text>
+          <Text style={styles.inputLabel}>
+            Ile godzin (in-game) do następnego?
+          </Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={nextSpeedupHours}
+            onChangeText={setNextSpeedupHours}
+            placeholderTextColor="#475569"
+          />
+          <Text style={styles.hint}>Domyślnie 10h (cykl resetuje się po wykonaniu)</Text>
 
           {/* Income */}
-          <section>
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
-              Następny dochód
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400">Za ile dni?</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={nextIncomeDays}
-                  onChange={(e) => setNextIncomeDays(e.target.value)}
-                  placeholder="0"
-                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-slate-400">Za ile godzin?</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={nextIncomeHours}
-                  onChange={(e) => setNextIncomeHours(e.target.value)}
-                  placeholder="0"
-                  className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
-                />
-              </div>
-            </div>
-            <p className="text-xs text-slate-600 mt-1">
-              Pozostały czas do pobrania dochodu (in-game)
-            </p>
-          </section>
+          <Text style={[styles.sectionLabel, styles.sectionGap]}>
+            Następny dochód
+          </Text>
+          <View style={styles.row2}>
+            <View style={styles.flex}>
+              <Text style={styles.inputLabel}>Za ile dni?</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={nextIncomeDays}
+                onChangeText={setNextIncomeDays}
+                placeholder="0"
+                placeholderTextColor="#475569"
+              />
+            </View>
+            <View style={[styles.flex, styles.rowGap]}>
+              <Text style={styles.inputLabel}>Za ile godzin?</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={nextIncomeHours}
+                onChangeText={setNextIncomeHours}
+                placeholder="0"
+                placeholderTextColor="#475569"
+              />
+            </View>
+          </View>
+          <Text style={styles.hint}>Pozostały czas do pobrania dochodu (in-game)</Text>
 
           {/* Goldbar */}
-          <section>
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
-              Goldbar — Lioncrest Manor
-            </h2>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-400">
-                Dzień ostatniej kradzieży
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={goldbarDay}
-                onChange={(e) => setGoldbarDay(e.target.value)}
-                placeholder="Opcjonalne"
-                className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-600"
-              />
-              <p className="text-xs text-slate-600">
-                Zostaw puste jeśli nie pamiętasz
-              </p>
-            </div>
-          </section>
+          <Text style={[styles.sectionLabel, styles.sectionGap]}>
+            Goldbar — Lioncrest Manor
+          </Text>
+          <Text style={styles.inputLabel}>Dzień ostatniej kradzieży</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={goldbarDay}
+            onChangeText={setGoldbarDay}
+            placeholder="Opcjonalne"
+            placeholderTextColor="#475569"
+          />
+          <Text style={styles.hint}>Zostaw puste jeśli nie pamiętasz</Text>
 
-          {/* Saved missions notice */}
-          {hasSavedMissions && (
-            <div className="bg-emerald-950/50 border border-emerald-800 rounded-lg px-4 py-3 text-xs text-emerald-400">
-              ✓{' '}
-              {
-                savedSessionData!.remainingMissions.filter(
-                  (m) => m.remainingHours > 0,
-                ).length
-              }{' '}
-              misja(-e) z poprzedniej sesji zostanie przywrócona.
-            </div>
+          {/* Restored missions notice */}
+          {savedMissionCount > 0 && (
+            <View style={styles.restoredBadge}>
+              <Text style={styles.restoredText}>
+                ✓ {savedMissionCount} misja(-e) z poprzedniej sesji zostanie przywrócona.
+              </Text>
+            </View>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-black font-bold rounded-xl py-3 text-base transition-all duration-200 cursor-pointer"
-          >
-            🎮 Start Grania
-          </button>
-        </form>
+          <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
+            <Text style={styles.startBtnText}>🎮 Start Grania</Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Info */}
-        <div className="mt-4 bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3">
-          <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide mb-2">
-            Legenda
-          </p>
-          <ul className="text-xs text-slate-500 space-y-1">
-            <li>
-              ⚡ Przyspieszenie czasu — co{' '}
-              <span className="text-slate-400">10h</span> in-game
-            </li>
-            <li>
-              💰 Dochód — co <span className="text-slate-400">3 dni</span>{' '}
-              in-game
-            </li>
-            <li>
-              🏰 Goldbar — co <span className="text-slate-400">7 dni</span>{' '}
-              in-game
-            </li>
-            <li>
-              ⏱ {REAL_TO_GAME_RATIO} min real ={' '}
-              <span className="text-slate-400">1h</span> in-game
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
+        {/* Legend */}
+        <View style={styles.legend}>
+          <Text style={styles.legendTitle}>LEGENDA</Text>
+          <Text style={styles.legendItem}>
+            ⚡ Przyspieszenie czasu — co{' '}
+            <Text style={styles.legendValue}>10h</Text> in-game
+          </Text>
+          <Text style={styles.legendItem}>
+            💰 Dochód — co <Text style={styles.legendValue}>3 dni</Text> in-game
+          </Text>
+          <Text style={styles.legendItem}>
+            🏰 Goldbar — co <Text style={styles.legendValue}>7 dni</Text> in-game
+          </Text>
+          <Text style={styles.legendItem}>
+            ⏱ {REAL_TO_GAME_RATIO} min real ={' '}
+            <Text style={styles.legendValue}>1h</Text> in-game
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-export default GameStart;
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#020617' },
+  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
+  header: { alignItems: 'center', marginBottom: 28 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#34d399' },
+  subtitle: { fontSize: 13, color: '#64748b', marginTop: 4 },
+  card: {
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 20,
+    marginBottom: 16,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  sectionGap: { marginTop: 20 },
+  inputLabel: { fontSize: 12, color: '#94a3b8', marginBottom: 4 },
+  input: {
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#f1f5f9',
+  },
+  hint: { fontSize: 11, color: '#475569', marginTop: 4 },
+  row3: { flexDirection: 'row', gap: 10 },
+  row2: { flexDirection: 'row', gap: 10 },
+  rowGap: { marginLeft: 0 },
+  restoredBadge: {
+    backgroundColor: '#052e16',
+    borderWidth: 1,
+    borderColor: '#166534',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+  },
+  restoredText: { fontSize: 12, color: '#34d399' },
+  startBtn: {
+    backgroundColor: '#059669',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  startBtnText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
+  legend: {
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    padding: 14,
+  },
+  legendTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  legendItem: { fontSize: 12, color: '#64748b', marginBottom: 4 },
+  legendValue: { color: '#94a3b8' },
+});

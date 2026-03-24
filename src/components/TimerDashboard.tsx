@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
 import useGameTimer from '../hooks/useGameTimer';
 import useGameStore from '../store/gameStore';
 import Timer from './Timer';
 import SessionControls from './SessionControls';
 import MissionManager from './MissionManager';
 
-function TimerDashboard() {
+export default function TimerDashboard() {
   const {
     currentGameTime,
     speedupTimer,
@@ -28,7 +37,6 @@ function TimerDashboard() {
 
   const handleEditClick = () => {
     if (!currentGameTime) return;
-    // currentGameTime = "Dzień X, HH:MM"
     const match = currentGameTime.match(/Dzień (\d+), (\d{2}):(\d{2})/);
     if (match) {
       setEditDay(match[1]);
@@ -54,90 +62,71 @@ function TimerDashboard() {
   if (!currentGameTime) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 md:p-6">
-      {/* Top bar */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-emerald-400 tracking-tight">
-              ⚔️ Crimson Desert
-            </h1>
-            <p className="text-slate-500 text-sm">Timer Tracker</p>
-          </div>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <View>
+            <Text style={styles.appTitle}>⚔️ Crimson Desert</Text>
+            <Text style={styles.appSubtitle}>Timer Tracker</Text>
+          </View>
+          <SessionControls />
+        </View>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Current game time */}
-            {!isEditing ? (
-              <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2">
-                <span className="text-xs text-slate-500 uppercase tracking-wide">
-                  Czas gry
-                </span>
-                <span className="font-mono font-bold text-emerald-400 text-sm">
-                  {currentGameTime}
-                </span>
-                <button
-                  onClick={handleEditClick}
-                  className="text-slate-400 hover:text-emerald-400 transition-colors text-xs ml-1"
-                  title="Koryguj czas gry"
-                >
-                  ✏️
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 bg-slate-800 border border-emerald-600 rounded-lg px-3 py-2">
-                <span className="text-xs text-slate-500">Dzień</span>
-                <input
-                  type="number"
-                  min="1"
-                  value={editDay}
-                  onChange={(e) => setEditDay(e.target.value)}
-                  className="w-14 bg-slate-700 text-slate-200 rounded px-2 py-1 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <span className="text-xs text-slate-500">HH</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={editHour}
-                  onChange={(e) => setEditHour(e.target.value)}
-                  className="w-12 bg-slate-700 text-slate-200 rounded px-2 py-1 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <span className="text-slate-600">:</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={editMinute}
-                  onChange={(e) => setEditMinute(e.target.value)}
-                  className="w-12 bg-slate-700 text-slate-200 rounded px-2 py-1 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <button
-                  onClick={handleSaveTime}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-black rounded px-2 py-1 text-xs font-bold transition-colors"
-                >
-                  ✓
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="bg-slate-700 hover:bg-slate-600 text-slate-300 rounded px-2 py-1 text-xs transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            <SessionControls />
-          </div>
-        </div>
+        {/* Game clock */}
+        <View style={styles.clockRow}>
+          {!isEditing ? (
+            <View style={styles.clockDisplay}>
+              <Text style={styles.clockLabel}>Czas gry</Text>
+              <Text style={styles.clockValue}>{currentGameTime}</Text>
+              <TouchableOpacity onPress={handleEditClick} style={styles.editBtn}>
+                <Text style={styles.editBtnText}>✏️</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.clockEdit}>
+              <Text style={styles.clockLabel}>Dzień</Text>
+              <TextInput
+                style={styles.editInput}
+                keyboardType="numeric"
+                value={editDay}
+                onChangeText={setEditDay}
+              />
+              <Text style={styles.clockLabel}>HH</Text>
+              <TextInput
+                style={styles.editInput}
+                keyboardType="numeric"
+                value={editHour}
+                onChangeText={setEditHour}
+              />
+              <Text style={styles.clockSep}>:</Text>
+              <TextInput
+                style={styles.editInput}
+                keyboardType="numeric"
+                value={editMinute}
+                onChangeText={setEditMinute}
+              />
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveTime}>
+                <Text style={styles.saveBtnText}>✓</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setIsEditing(false)}
+              >
+                <Text style={styles.cancelBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
         {/* Cyclic actions */}
-        <section className="mb-8">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-6 h-px bg-slate-700" />
-            Akcje Cykliczne
-            <span className="flex-1 h-px bg-slate-700" />
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.sectionLabel}>Akcje Cykliczne</Text>
+            <View style={[styles.dividerLine, styles.dividerFlex]} />
+          </View>
+          <View style={styles.timerGrid}>
             {speedupTimer && (
               <Timer
                 icon="⚡"
@@ -176,23 +165,21 @@ function TimerDashboard() {
                 realTimeRemaining={goldbarTimer.realTimeRemaining}
               />
             )}
-          </div>
-        </section>
+          </View>
+        </View>
 
-        {/* Missions */}
-        <section>
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <span className="w-6 h-px bg-slate-700" />
-            Misje Pracowników
-            <span className="flex-1 h-px bg-slate-700" />
-          </h2>
+        {/* Worker missions */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.sectionLabel}>Misje Pracowników</Text>
+            <View style={[styles.dividerLine, styles.dividerFlex]} />
+          </View>
           <MissionManager />
           {missionTimers.length === 0 ? (
-            <p className="text-slate-600 text-sm italic text-center py-8">
-              Brak aktywnych misji
-            </p>
+            <Text style={styles.emptyText}>Brak aktywnych misji</Text>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mt-3">
+            <View style={[styles.timerGrid, styles.missionGrid]}>
               {missionTimers.map((mission) => (
                 <Timer
                   key={mission.id}
@@ -208,12 +195,102 @@ function TimerDashboard() {
                   gameTimeRemaining={mission.gameTimeRemaining}
                 />
               ))}
-            </div>
+            </View>
           )}
-        </section>
-      </div>
-    </div>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-export default TimerDashboard;
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#020617' },
+  scroll: { flex: 1 },
+  content: { padding: 16, paddingBottom: 40 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  appTitle: { fontSize: 22, fontWeight: 'bold', color: '#34d399' },
+  appSubtitle: { fontSize: 12, color: '#64748b' },
+  clockRow: { marginBottom: 24 },
+  clockDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  clockLabel: { fontSize: 11, color: '#64748b', textTransform: 'uppercase' },
+  clockValue: { fontSize: 14, fontWeight: 'bold', color: '#34d399' },
+  editBtn: { paddingHorizontal: 4 },
+  editBtnText: { fontSize: 14 },
+  clockEdit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#059669',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  editInput: {
+    backgroundColor: '#334155',
+    color: '#e2e8f0',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    fontSize: 14,
+    width: 44,
+    textAlign: 'center',
+  },
+  clockSep: { color: '#94a3b8', fontSize: 14 },
+  saveBtn: {
+    backgroundColor: '#059669',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  saveBtnText: { color: '#000', fontWeight: 'bold', fontSize: 13 },
+  cancelBtn: {
+    backgroundColor: '#334155',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  cancelBtnText: { color: '#cbd5e1', fontSize: 13 },
+  section: { marginBottom: 24 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  dividerLine: { width: 24, height: 1, backgroundColor: '#334155' },
+  dividerFlex: { flex: 1 },
+  timerGrid: { gap: 8 },
+  missionGrid: { marginTop: 12 },
+  emptyText: {
+    color: '#475569',
+    fontSize: 13,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
+});
