@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import useGameTimer from '../hooks/useGameTimer';
 import useGameStore from '../store/gameStore';
 import Timer from './Timer';
@@ -79,7 +79,10 @@ export default function TimerDashboard() {
             <View style={styles.clockDisplay}>
               <Text style={styles.clockLabel}>Czas gry</Text>
               <Text style={styles.clockValue}>{currentGameTime}</Text>
-              <TouchableOpacity onPress={handleEditClick} style={styles.editBtn}>
+              <TouchableOpacity
+                onPress={handleEditClick}
+                style={styles.editBtn}
+              >
                 <Text style={styles.editBtnText}>✏️</Text>
               </TouchableOpacity>
             </View>

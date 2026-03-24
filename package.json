@@ -8,15 +8,16 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
-    "expo": "~55.0.8",
-    "expo-status-bar": "~55.0.4",
-    "expo-notifications": "~0.31.0",
-    "expo-linear-gradient": "~14.1.4",
     "@react-native-async-storage/async-storage": "~2.2.0",
+    "dayjs": "^1.11.13",
+    "expo": "~55.0.8",
+    "expo-linear-gradient": "~14.1.4",
+    "expo-notifications": "~0.31.0",
+    "expo-status-bar": "~55.0.4",
     "react": "19.2.0",
     "react-native": "0.83.2",
-    "zustand": "^5.0.4",
-    "dayjs": "^1.11.13"
+    "react-native-safe-area-context": "~5.6.2",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

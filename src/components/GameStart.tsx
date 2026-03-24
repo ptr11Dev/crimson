@@ -40,7 +40,9 @@ export default function GameStart() {
       setNextIncomeHours(String(savedSessionData.nextIncomeHours));
     }
     if (savedSessionData?.nextSpeedupHours != null) {
-      setNextSpeedupHours(String(Math.round(savedSessionData.nextSpeedupHours)));
+      setNextSpeedupHours(
+        String(Math.round(savedSessionData.nextSpeedupHours)),
+      );
     }
     if (lastGoldbarDay != null) {
       setGoldbarDay(String(lastGoldbarDay));
@@ -59,12 +61,17 @@ export default function GameStart() {
     const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     const currentTotalMins = (day - 1) * 24 * 60 + hour * 60 + minute;
 
-    const existingMissions: Mission[] = (savedSessionData?.remainingMissions ?? [])
+    const existingMissions: Mission[] = (
+      savedSessionData?.remainingMissions ?? []
+    )
       .filter((m) => m.remainingHours > 0)
       .map((m, idx) => {
         const elapsedMins = (m.durationHours - m.remainingHours) * 60;
         const startTotalMins = currentTotalMins - elapsedMins;
-        const startDay = Math.max(1, Math.floor(startTotalMins / (24 * 60)) + 1);
+        const startDay = Math.max(
+          1,
+          Math.floor(startTotalMins / (24 * 60)) + 1,
+        );
         const startTod = ((startTotalMins % (24 * 60)) + 24 * 60) % (24 * 60);
         const startHour = Math.floor(startTod / 60);
         const startMin = startTod % 60;
@@ -78,7 +85,15 @@ export default function GameStart() {
         };
       });
 
-    startSession(day, time, speedupH, incDays, incHours, gbDay, existingMissions);
+    startSession(
+      day,
+      time,
+      speedupH,
+      incDays,
+      incHours,
+      gbDay,
+      existingMissions,
+    );
   };
 
   if (sessionStartTime) return null;
@@ -152,7 +167,9 @@ export default function GameStart() {
             onChangeText={setNextSpeedupHours}
             placeholderTextColor="#475569"
           />
-          <Text style={styles.hint}>Domyślnie 10h (cykl resetuje się po wykonaniu)</Text>
+          <Text style={styles.hint}>
+            Domyślnie 10h (cykl resetuje się po wykonaniu)
+          </Text>
 
           {/* Income */}
           <Text style={[styles.sectionLabel, styles.sectionGap]}>
@@ -182,7 +199,9 @@ export default function GameStart() {
               />
             </View>
           </View>
-          <Text style={styles.hint}>Pozostały czas do pobrania dochodu (in-game)</Text>
+          <Text style={styles.hint}>
+            Pozostały czas do pobrania dochodu (in-game)
+          </Text>
 
           {/* Goldbar */}
           <Text style={[styles.sectionLabel, styles.sectionGap]}>
@@ -203,7 +222,8 @@ export default function GameStart() {
           {savedMissionCount > 0 && (
             <View style={styles.restoredBadge}>
               <Text style={styles.restoredText}>
-                ✓ {savedMissionCount} misja(-e) z poprzedniej sesji zostanie przywrócona.
+                ✓ {savedMissionCount} misja(-e) z poprzedniej sesji zostanie
+                przywrócona.
               </Text>
             </View>
           )}
@@ -224,7 +244,8 @@ export default function GameStart() {
             💰 Dochód — co <Text style={styles.legendValue}>3 dni</Text> in-game
           </Text>
           <Text style={styles.legendItem}>
-            🏰 Goldbar — co <Text style={styles.legendValue}>7 dni</Text> in-game
+            🏰 Goldbar — co <Text style={styles.legendValue}>7 dni</Text>{' '}
+            in-game
           </Text>
           <Text style={styles.legendItem}>
             ⏱ {REAL_TO_GAME_RATIO} min real ={' '}

@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatGameDateTime } from '../utils/timeCalculator';
 
@@ -114,9 +109,17 @@ export default function Timer({
         <TouchableOpacity
           onPress={onConfirm}
           disabled={!isReady}
-          style={[styles.confirmBtn, isReady ? styles.confirmBtnReady : styles.confirmBtnDisabled]}
+          style={[
+            styles.confirmBtn,
+            isReady ? styles.confirmBtnReady : styles.confirmBtnDisabled,
+          ]}
         >
-          <Text style={[styles.confirmBtnText, !isReady && styles.confirmBtnTextDisabled]}>
+          <Text
+            style={[
+              styles.confirmBtnText,
+              !isReady && styles.confirmBtnTextDisabled,
+            ]}
+          >
             ✓
           </Text>
         </TouchableOpacity>
@@ -148,7 +151,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 6,
   },
-  titleGroup: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 },
+  titleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    minWidth: 0,
+  },
   icon: { fontSize: 14 },
   title: { fontSize: 12, fontWeight: '600', color: '#cbd5e1', flex: 1 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },

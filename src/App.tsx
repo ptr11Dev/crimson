@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import useGameStore from './store/gameStore';
 import GameStart from './components/GameStart';
@@ -37,10 +38,12 @@ export default function App() {
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
-      {!sessionStartTime ? <GameStart /> : <TimerDashboard />}
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.root}>
+        <StatusBar style="light" />
+        {!sessionStartTime ? <GameStart /> : <TimerDashboard />}
+      </View>
+    </SafeAreaProvider>
   );
 }
 

@@ -31,7 +31,8 @@ export default function EndSessionModal({ onClose }: Props) {
             <View style={styles.card}>
               <Text style={styles.title}>Zakończyć sesję?</Text>
               <Text style={styles.body}>
-                Stan timerów zostanie zapisany i wczytany przy następnym starcie.
+                Stan timerów zostanie zapisany i wczytany przy następnym
+                starcie.
               </Text>
               <Text style={styles.sub}>
                 Goldbar i czasy dochodów / misji są zachowane lokalnie.
@@ -78,7 +79,12 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 10,
   },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#f1f5f9', marginBottom: 8 },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#f1f5f9',
+    marginBottom: 8,
+  },
   body: { fontSize: 14, color: '#94a3b8', marginBottom: 4 },
   sub: { fontSize: 12, color: '#64748b', marginBottom: 24 },
   buttons: { flexDirection: 'row', gap: 12 },

@@ -158,7 +158,11 @@ const useGameTimer = (): UseGameTimerReturn => {
         realTimeRemaining: !speedup.available ? formatMs(msUntil) : null,
       });
       if (!speedup.available) {
-        scheduleIfNeeded('speedup', Date.now() + msUntil, 'Przyspieszenie Czasu');
+        scheduleIfNeeded(
+          'speedup',
+          Date.now() + msUntil,
+          'Przyspieszenie Czasu',
+        );
       }
     }
 
@@ -202,7 +206,11 @@ const useGameTimer = (): UseGameTimerReturn => {
         gameTimeRemaining: incomeGameRemaining,
       });
       if (!income.available) {
-        scheduleIfNeeded('income', Date.now() + msUntilIncome, 'Pobranie Dochodu');
+        scheduleIfNeeded(
+          'income',
+          Date.now() + msUntilIncome,
+          'Pobranie Dochodu',
+        );
       }
     }
 
@@ -278,7 +286,9 @@ const useGameTimer = (): UseGameTimerReturn => {
         endTime: missionTime.endTime,
         available: missionTime.available,
         progress,
-        realTimeRemaining: !missionTime.available ? formatMs(msUntilMission) : null,
+        realTimeRemaining: !missionTime.available
+          ? formatMs(msUntilMission)
+          : null,
         gameTimeRemaining: gameRemaining,
       };
     });
