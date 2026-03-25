@@ -18,7 +18,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#020617"
-      }
+      },
+      "package": "com.piotrrr.crimsondesert"
     },
     "plugins": [
       [
