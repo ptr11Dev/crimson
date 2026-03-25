@@ -32,7 +32,7 @@ export default function App() {
     return (
       <View style={styles.loading}>
         <StatusBar style="light" />
-        <Text style={styles.loadingText}>⚔️</Text>
+        <Text style={styles.loadingText}>CD</Text>
       </View>
     );
   }
@@ -59,6 +59,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: {
-    fontSize: 48,
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#34d399',
+    letterSpacing: 4,
   },
 });

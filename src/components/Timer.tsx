@@ -54,7 +54,9 @@ export default function Timer({
       {/* Row 1: icon + title + badges + action buttons */}
       <View style={styles.row}>
         <View style={styles.titleGroup}>
-          <Text style={styles.icon}>{icon}</Text>
+          <View style={styles.iconBadge}>
+            <Text style={styles.icon}>{icon}</Text>
+          </View>
           <Text style={styles.title} numberOfLines={1}>
             {title}
           </Text>
@@ -86,10 +88,10 @@ export default function Timer({
         {!isReady && (realTimeRemaining || gameTimeRemaining) && (
           <View style={styles.countdowns}>
             {realTimeRemaining && (
-              <Text style={styles.realTime}>⏱ {realTimeRemaining}</Text>
+              <Text style={styles.realTime}>R: {realTimeRemaining}</Text>
             )}
             {gameTimeRemaining && (
-              <Text style={styles.gameTime}>🎮 {gameTimeRemaining}</Text>
+              <Text style={styles.gameTime}>G: {gameTimeRemaining}</Text>
             )}
           </View>
         )}
@@ -158,7 +160,17 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  icon: { fontSize: 14 },
+  icon: { fontSize: 10, fontWeight: 'bold', color: '#94a3b8' },
+  iconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: { fontSize: 12, fontWeight: '600', color: '#cbd5e1', flex: 1 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   readyBadge: {

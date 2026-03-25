@@ -9,12 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import useGameStore, { Mission } from '../store/gameStore';
 import { REAL_TO_GAME_RATIO } from '../constants';
+import LegendModal from './LegendModal';
 
 export default function GameStart() {
   const { sessionStartTime, startSession, savedSessionData, lastGoldbarDay } =
     useGameStore();
+  const [legendVisible, setLegendVisible] = useState(false);
 
   const [gameDay, setGameDay] = useState('1');
   const [gameHour, setGameHour] = useState('0');
@@ -103,19 +107,30 @@ export default function GameStart() {
   ).length;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea}>
+      <LegendModal visible={legendVisible} onClose={() => setLegendVisible(false)} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>⚔️ Crimson Desert</Text>
-          <Text style={styles.subtitle}>Timer Tracker — Nowa sesja</Text>
-        </View>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              <Text style={styles.title}>Crimson Desert</Text>
+              <Text style={styles.subtitle}>Timer Tracker — Nowa sesja</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setLegendVisible(true)}
+              style={styles.infoBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="information-circle-outline" size={22} color="#64748b" />
+            </TouchableOpacity>
+          </View>
 
         <View style={styles.card}>
           {/* Game time */}
@@ -229,41 +244,31 @@ export default function GameStart() {
           )}
 
           <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
-            <Text style={styles.startBtnText}>🎮 Start Grania</Text>
+            <Text style={styles.startBtnText}>Start Grania</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Legend */}
-        <View style={styles.legend}>
-          <Text style={styles.legendTitle}>LEGENDA</Text>
-          <Text style={styles.legendItem}>
-            ⚡ Przyspieszenie czasu — co{' '}
-            <Text style={styles.legendValue}>10h</Text> in-game
-          </Text>
-          <Text style={styles.legendItem}>
-            💰 Dochód — co <Text style={styles.legendValue}>3 dni</Text> in-game
-          </Text>
-          <Text style={styles.legendItem}>
-            🏰 Goldbar — co <Text style={styles.legendValue}>7 dni</Text>{' '}
-            in-game
-          </Text>
-          <Text style={styles.legendItem}>
-            ⏱ {REAL_TO_GAME_RATIO} min real ={' '}
-            <Text style={styles.legendValue}>1h</Text> in-game
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#020617' },
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: '#020617' },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
-  header: { alignItems: 'center', marginBottom: 28 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#34d399' },
-  subtitle: { fontSize: 13, color: '#64748b', marginTop: 4 },
+  content: { padding: 20, paddingTop: 16, paddingBottom: 40 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    position: 'relative',
+  },
+  headerContent: { alignItems: 'center' },
+  infoBtn: { position: 'absolute', right: 0 },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#34d399' },
+  subtitle: { fontSize: 12, color: '#64748b', marginTop: 4 },
   card: {
     backgroundColor: '#0f172a',
     borderRadius: 16,
@@ -311,23 +316,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 20,
+    alignSelf: 'stretch',
   },
   startBtnText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
-  legend: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    padding: 14,
-  },
-  legendTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#475569',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  legendItem: { fontSize: 12, color: '#64748b', marginBottom: 4 },
-  legendValue: { color: '#94a3b8' },
 });

@@ -8,11 +8,13 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import useGameTimer from '../hooks/useGameTimer';
 import useGameStore from '../store/gameStore';
 import Timer from './Timer';
 import SessionControls from './SessionControls';
 import MissionManager from './MissionManager';
+import LegendModal from './LegendModal';
 
 export default function TimerDashboard() {
   const {
@@ -34,6 +36,7 @@ export default function TimerDashboard() {
   const [editDay, setEditDay] = useState('');
   const [editHour, setEditHour] = useState('');
   const [editMinute, setEditMinute] = useState('');
+  const [legendVisible, setLegendVisible] = useState(false);
 
   const handleEditClick = () => {
     if (!currentGameTime) return;
@@ -63,13 +66,21 @@ export default function TimerDashboard() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <LegendModal visible={legendVisible} onClose={() => setLegendVisible(false)} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Top bar */}
         <View style={styles.topBar}>
-          <View>
-            <Text style={styles.appTitle}>⚔️ Crimson Desert</Text>
+          <View style={styles.topBarLeft}>
+            <Text style={styles.appTitle}>Crimson Desert</Text>
             <Text style={styles.appSubtitle}>Timer Tracker</Text>
           </View>
+          <TouchableOpacity
+            onPress={() => setLegendVisible(true)}
+            style={styles.infoBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="information-circle-outline" size={20} color="#64748b" />
+          </TouchableOpacity>
           <SessionControls />
         </View>
 
@@ -83,7 +94,7 @@ export default function TimerDashboard() {
                 onPress={handleEditClick}
                 style={styles.editBtn}
               >
-                <Text style={styles.editBtnText}>✏️</Text>
+                <Ionicons name="pencil" size={13} color="#fff" />
               </TouchableOpacity>
             </View>
           ) : (
@@ -110,13 +121,13 @@ export default function TimerDashboard() {
                 onChangeText={setEditMinute}
               />
               <TouchableOpacity style={styles.saveBtn} onPress={handleSaveTime}>
-                <Text style={styles.saveBtnText}>✓</Text>
+                <Text style={styles.saveBtnText}>OK</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.cancelBtn}
                 onPress={() => setIsEditing(false)}
               >
-                <Text style={styles.cancelBtnText}>✕</Text>
+                <Text style={styles.cancelBtnText}>Anuluj</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -132,7 +143,7 @@ export default function TimerDashboard() {
           <View style={styles.timerGrid}>
             {speedupTimer && (
               <Timer
-                icon="⚡"
+                icon="SP"
                 title="Przyspieszenie Czasu"
                 targetDay={speedupTimer.nextDay}
                 targetTime={speedupTimer.nextTime}
@@ -145,7 +156,7 @@ export default function TimerDashboard() {
             )}
             {incomeTimer && (
               <Timer
-                icon="💰"
+                icon="$"
                 title="Pobranie Dochodu"
                 targetDay={incomeTimer.nextDay}
                 targetTime={incomeTimer.nextTime}
@@ -158,7 +169,7 @@ export default function TimerDashboard() {
             )}
             {goldbarTimer && (
               <Timer
-                icon="🏰"
+                icon="GB"
                 title="Goldbar — Lioncrest Manor"
                 targetDay={goldbarTimer.nextDay}
                 targetTime="00:00"
@@ -186,7 +197,7 @@ export default function TimerDashboard() {
               {missionTimers.map((mission) => (
                 <Timer
                   key={mission.id}
-                  icon="📋"
+                  icon="M"
                   title={mission.type}
                   targetDay={mission.endDay}
                   targetTime={mission.endTime}
@@ -215,7 +226,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 8,
   },
+  topBarLeft: { flex: 1 },
+  infoBtn: { paddingHorizontal: 2 },
   appTitle: { fontSize: 22, fontWeight: 'bold', color: '#34d399' },
   appSubtitle: { fontSize: 12, color: '#64748b' },
   clockRow: { marginBottom: 24 },
@@ -233,8 +247,14 @@ const styles = StyleSheet.create({
   },
   clockLabel: { fontSize: 11, color: '#64748b', textTransform: 'uppercase' },
   clockValue: { fontSize: 14, fontWeight: 'bold', color: '#34d399' },
-  editBtn: { paddingHorizontal: 4 },
-  editBtnText: { fontSize: 14 },
+  editBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    backgroundColor: '#0284c7',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   clockEdit: {
     flexDirection: 'row',
     alignItems: 'center',
