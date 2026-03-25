@@ -66,7 +66,10 @@ export default function TimerDashboard() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LegendModal visible={legendVisible} onClose={() => setLegendVisible(false)} />
+      <LegendModal
+        visible={legendVisible}
+        onClose={() => setLegendVisible(false)}
+      />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Top bar */}
         <View style={styles.topBar}>
@@ -79,7 +82,11 @@ export default function TimerDashboard() {
             style={styles.infoBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="information-circle-outline" size={20} color="#64748b" />
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color="#64748b"
+            />
           </TouchableOpacity>
           <SessionControls />
         </View>

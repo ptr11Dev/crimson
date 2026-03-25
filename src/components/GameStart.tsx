@@ -108,7 +108,10 @@ export default function GameStart() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LegendModal visible={legendVisible} onClose={() => setLegendVisible(false)} />
+      <LegendModal
+        visible={legendVisible}
+        onClose={() => setLegendVisible(false)}
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -128,125 +131,129 @@ export default function GameStart() {
               style={styles.infoBtn}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="information-circle-outline" size={22} color="#64748b" />
+              <Ionicons
+                name="information-circle-outline"
+                size={22}
+                color="#64748b"
+              />
             </TouchableOpacity>
           </View>
 
-        <View style={styles.card}>
-          {/* Game time */}
-          <Text style={styles.sectionLabel}>Bieżący czas w grze</Text>
-          <View style={styles.row3}>
-            <View style={styles.flex}>
-              <Text style={styles.inputLabel}>Dzień</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={gameDay}
-                onChangeText={setGameDay}
-                placeholderTextColor="#475569"
-              />
+          <View style={styles.card}>
+            {/* Game time */}
+            <Text style={styles.sectionLabel}>Bieżący czas w grze</Text>
+            <View style={styles.row3}>
+              <View style={styles.flex}>
+                <Text style={styles.inputLabel}>Dzień</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={gameDay}
+                  onChangeText={setGameDay}
+                  placeholderTextColor="#475569"
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.inputLabel}>Godzina</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={gameHour}
+                  onChangeText={setGameHour}
+                  placeholderTextColor="#475569"
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.inputLabel}>Minuta</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={gameMinute}
+                  onChangeText={setGameMinute}
+                  placeholderTextColor="#475569"
+                />
+              </View>
             </View>
-            <View style={styles.flex}>
-              <Text style={styles.inputLabel}>Godzina</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={gameHour}
-                onChangeText={setGameHour}
-                placeholderTextColor="#475569"
-              />
+
+            {/* Speedup */}
+            <Text style={[styles.sectionLabel, styles.sectionGap]}>
+              Przyspieszenie czasu
+            </Text>
+            <Text style={styles.inputLabel}>
+              Ile godzin (in-game) do następnego?
+            </Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={nextSpeedupHours}
+              onChangeText={setNextSpeedupHours}
+              placeholderTextColor="#475569"
+            />
+            <Text style={styles.hint}>
+              Domyślnie 10h (cykl resetuje się po wykonaniu)
+            </Text>
+
+            {/* Income */}
+            <Text style={[styles.sectionLabel, styles.sectionGap]}>
+              Następny dochód
+            </Text>
+            <View style={styles.row2}>
+              <View style={styles.flex}>
+                <Text style={styles.inputLabel}>Za ile dni?</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={nextIncomeDays}
+                  onChangeText={setNextIncomeDays}
+                  placeholder="0"
+                  placeholderTextColor="#475569"
+                />
+              </View>
+              <View style={[styles.flex, styles.rowGap]}>
+                <Text style={styles.inputLabel}>Za ile godzin?</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={nextIncomeHours}
+                  onChangeText={setNextIncomeHours}
+                  placeholder="0"
+                  placeholderTextColor="#475569"
+                />
+              </View>
             </View>
-            <View style={styles.flex}>
-              <Text style={styles.inputLabel}>Minuta</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={gameMinute}
-                onChangeText={setGameMinute}
-                placeholderTextColor="#475569"
-              />
-            </View>
+            <Text style={styles.hint}>
+              Pozostały czas do pobrania dochodu (in-game)
+            </Text>
+
+            {/* Goldbar */}
+            <Text style={[styles.sectionLabel, styles.sectionGap]}>
+              Goldbar — Lioncrest Manor
+            </Text>
+            <Text style={styles.inputLabel}>Dzień ostatniej kradzieży</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={goldbarDay}
+              onChangeText={setGoldbarDay}
+              placeholder="Opcjonalne"
+              placeholderTextColor="#475569"
+            />
+            <Text style={styles.hint}>Zostaw puste jeśli nie pamiętasz</Text>
+
+            {/* Restored missions notice */}
+            {savedMissionCount > 0 && (
+              <View style={styles.restoredBadge}>
+                <Text style={styles.restoredText}>
+                  ✓ {savedMissionCount} misja(-e) z poprzedniej sesji zostanie
+                  przywrócona.
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
+              <Text style={styles.startBtnText}>Start Grania</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Speedup */}
-          <Text style={[styles.sectionLabel, styles.sectionGap]}>
-            Przyspieszenie czasu
-          </Text>
-          <Text style={styles.inputLabel}>
-            Ile godzin (in-game) do następnego?
-          </Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={nextSpeedupHours}
-            onChangeText={setNextSpeedupHours}
-            placeholderTextColor="#475569"
-          />
-          <Text style={styles.hint}>
-            Domyślnie 10h (cykl resetuje się po wykonaniu)
-          </Text>
-
-          {/* Income */}
-          <Text style={[styles.sectionLabel, styles.sectionGap]}>
-            Następny dochód
-          </Text>
-          <View style={styles.row2}>
-            <View style={styles.flex}>
-              <Text style={styles.inputLabel}>Za ile dni?</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={nextIncomeDays}
-                onChangeText={setNextIncomeDays}
-                placeholder="0"
-                placeholderTextColor="#475569"
-              />
-            </View>
-            <View style={[styles.flex, styles.rowGap]}>
-              <Text style={styles.inputLabel}>Za ile godzin?</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={nextIncomeHours}
-                onChangeText={setNextIncomeHours}
-                placeholder="0"
-                placeholderTextColor="#475569"
-              />
-            </View>
-          </View>
-          <Text style={styles.hint}>
-            Pozostały czas do pobrania dochodu (in-game)
-          </Text>
-
-          {/* Goldbar */}
-          <Text style={[styles.sectionLabel, styles.sectionGap]}>
-            Goldbar — Lioncrest Manor
-          </Text>
-          <Text style={styles.inputLabel}>Dzień ostatniej kradzieży</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={goldbarDay}
-            onChangeText={setGoldbarDay}
-            placeholder="Opcjonalne"
-            placeholderTextColor="#475569"
-          />
-          <Text style={styles.hint}>Zostaw puste jeśli nie pamiętasz</Text>
-
-          {/* Restored missions notice */}
-          {savedMissionCount > 0 && (
-            <View style={styles.restoredBadge}>
-              <Text style={styles.restoredText}>
-                ✓ {savedMissionCount} misja(-e) z poprzedniej sesji zostanie
-                przywrócona.
-              </Text>
-            </View>
-          )}
-
-          <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
-            <Text style={styles.startBtnText}>Start Grania</Text>
-          </TouchableOpacity>
-        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

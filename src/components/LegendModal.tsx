@@ -64,7 +64,9 @@ export default function LegendModal({ visible, onClose }: Props) {
                 </View>
                 <View style={styles.rowContent}>
                   <Text style={styles.label}>Misja pracownika</Text>
-                  <Text style={styles.value}>czas zdefiniowany przy dodaniu</Text>
+                  <Text style={styles.value}>
+                    czas zdefiniowany przy dodaniu
+                  </Text>
                 </View>
               </View>
 
