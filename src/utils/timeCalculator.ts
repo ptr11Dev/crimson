@@ -46,15 +46,21 @@ export interface RealTimeRemaining {
 /**
  * Convert real-time minutes to game hours
  */
-export const realMinutesToGameHours = (realMinutes: number): number => {
-  return realMinutes / REAL_TO_GAME_RATIO;
+export const realMinutesToGameHours = (
+  realMinutes: number,
+  ratio: number = REAL_TO_GAME_RATIO,
+): number => {
+  return realMinutes / ratio;
 };
 
 /**
  * Convert game hours to real-time minutes
  */
-export const gameHoursToRealMinutes = (gameHours: number): number => {
-  return gameHours * REAL_TO_GAME_RATIO;
+export const gameHoursToRealMinutes = (
+  gameHours: number,
+  ratio: number = REAL_TO_GAME_RATIO,
+): number => {
+  return gameHours * ratio;
 };
 
 /**
@@ -81,10 +87,11 @@ export const calculateCurrentGameTime = (
   sessionStartTime: number,
   initialGameDay: number,
   initialGameTime: string,
+  ratio: number = REAL_TO_GAME_RATIO,
 ): GameTime => {
   const realElapsedMs = Date.now() - sessionStartTime;
   const realElapsedMinutes = realElapsedMs / (1000 * 60);
-  const gameElapsedHours = realMinutesToGameHours(realElapsedMinutes);
+  const gameElapsedHours = realMinutesToGameHours(realElapsedMinutes, ratio);
 
   const initialMinutes = parseGameTime(initialGameTime);
   const totalGameMinutes = initialMinutes + gameElapsedHours * 60;
@@ -100,10 +107,10 @@ export const calculateCurrentGameTime = (
 };
 
 /**
- * Format game time as "Dzień X, HH:MM"
+ * Format game time as "Day X, HH:MM"
  */
 export const formatGameDateTime = (day: number, time: string): string => {
-  return `Dzień ${day}, ${time}`;
+  return `Day ${day}, ${time}`;
 };
 
 /**
@@ -292,6 +299,7 @@ export const calculateRealTimeUntil = (
   initialGameTime: string,
   targetDay: number,
   targetTime: string,
+  ratio: number = REAL_TO_GAME_RATIO,
 ): number => {
   // Calculate target in total game minutes from start
   const initialMinutes = parseGameTime(initialGameTime);
@@ -303,7 +311,10 @@ export const calculateRealTimeUntil = (
   const gameMinutesToTarget = targetTotalMinutes - initialTotalMinutes;
 
   // Convert to real time
-  const realMinutesToTarget = gameHoursToRealMinutes(gameMinutesToTarget / 60);
+  const realMinutesToTarget = gameHoursToRealMinutes(
+    gameMinutesToTarget / 60,
+    ratio,
+  );
   const realMsToTarget = realMinutesToTarget * 60 * 1000;
 
   // Calculate exact timestamp when target will be reached

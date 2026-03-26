@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { formatGameDateTime } from '../utils/timeCalculator';
 
 interface TimerProps {
@@ -15,6 +16,9 @@ interface TimerProps {
   onReset?: () => void;
   realTimeRemaining?: string | null;
   gameTimeRemaining?: string | null;
+  cyclic?: boolean;
+  cyclesCompleted?: number;
+  onToggleCyclic?: () => void;
 }
 
 function getProgressColors(pct: number): [string, string] {
@@ -45,27 +49,38 @@ export default function Timer({
   onReset,
   realTimeRemaining,
   gameTimeRemaining,
+  cyclic,
+  cyclesCompleted,
+  onToggleCyclic,
 }: TimerProps) {
   const pct = Math.min(100, Math.max(0, currentProgress));
   const [colorA, colorB] = getProgressColors(pct);
 
   return (
     <View style={[styles.card, isReady && styles.cardReady]}>
-      {/* Row 1: icon + title + badges + action buttons */}
-      <View style={styles.row}>
-        <View style={styles.titleGroup}>
-          <View style={styles.iconBadge}>
-            <Text style={styles.icon}>{icon}</Text>
-          </View>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
+      {/* Header: icon badge + title + action buttons */}
+      <View style={styles.headerRow}>
+        <View style={styles.iconBadge}>
+          <Text style={styles.icon}>{icon}</Text>
         </View>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+          {cyclic || (cyclesCompleted !== undefined && cyclesCompleted > 0)
+            ? ` (${cyclesCompleted ?? 0})`
+            : ''}
+        </Text>
         <View style={styles.actions}>
-          {isReady && (
-            <View style={styles.readyBadge}>
-              <Text style={styles.readyText}>GOTOWE</Text>
-            </View>
+          {onToggleCyclic && (
+            <TouchableOpacity
+              onPress={onToggleCyclic}
+              style={[styles.iconBtn, cyclic && styles.cyclicBtnActive]}
+            >
+              <Ionicons
+                name="repeat"
+                size={12}
+                color={cyclic ? '#10b981' : '#475569'}
+              />
+            </TouchableOpacity>
           )}
           {onReset && (
             <TouchableOpacity onPress={onReset} style={styles.iconBtn}>
@@ -80,64 +95,70 @@ export default function Timer({
         </View>
       </View>
 
-      {/* Row 2: target time + countdowns */}
-      <View style={styles.row}>
-        <Text style={[styles.targetTime, isReady && styles.targetTimeReady]}>
-          {formatGameDateTime(targetDay, targetTime)}
-        </Text>
-        {!isReady && (realTimeRemaining || gameTimeRemaining) && (
-          <View style={styles.countdowns}>
-            {realTimeRemaining && (
-              <Text style={styles.realTime}>R: {realTimeRemaining}</Text>
-            )}
-            {gameTimeRemaining && (
-              <Text style={styles.gameTime}>G: {gameTimeRemaining}</Text>
-            )}
-          </View>
-        )}
+      {/* Progress bar */}
+      <View style={styles.progressTrack}>
+        <LinearGradient
+          colors={[colorA, colorB]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.progressFill, { width: `${pct}%` }]}
+        />
       </View>
 
-      {/* Row 3: progress bar + % + confirm button */}
-      <View style={styles.row}>
-        <View style={styles.progressTrack}>
-          <LinearGradient
-            colors={[colorA, colorB]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.progressFill, { width: `${pct}%` }]}
-          />
-        </View>
+      {/* Target time + percentage */}
+      <View style={styles.infoRow}>
+        <Text
+          style={[styles.targetTime, isReady && styles.targetTimeReady]}
+          numberOfLines={1}
+        >
+          {isReady ? 'READY' : formatGameDateTime(targetDay, targetTime)}
+        </Text>
         <Text style={styles.pct}>{pct.toFixed(0)}%</Text>
-        <TouchableOpacity
-          onPress={onConfirm}
-          disabled={!isReady}
+      </View>
+
+      {/* Countdowns */}
+      {!isReady && realTimeRemaining && (
+        <Text style={styles.realTime} numberOfLines={1}>
+          R: {realTimeRemaining}
+        </Text>
+      )}
+      {!isReady && gameTimeRemaining && (
+        <Text style={styles.gameTime} numberOfLines={1}>
+          G: {gameTimeRemaining}
+        </Text>
+      )}
+
+      {/* Confirm button */}
+      <TouchableOpacity
+        onPress={onConfirm}
+        disabled={!isReady}
+        style={[
+          styles.confirmBtn,
+          isReady ? styles.confirmBtnReady : styles.confirmBtnDisabled,
+        ]}
+      >
+        <Text
           style={[
-            styles.confirmBtn,
-            isReady ? styles.confirmBtnReady : styles.confirmBtnDisabled,
+            styles.confirmBtnText,
+            !isReady && styles.confirmBtnTextDisabled,
           ]}
         >
-          <Text
-            style={[
-              styles.confirmBtnText,
-              !isReady && styles.confirmBtnTextDisabled,
-            ]}
-          >
-            ✓
-          </Text>
-        </TouchableOpacity>
-      </View>
+          Done
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: '#0f172a',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#334155',
-    padding: 10,
-    gap: 8,
+    padding: 8,
+    gap: 6,
   },
   cardReady: {
     borderColor: '#10b981',
@@ -147,23 +168,14 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  row: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 6,
+    gap: 5,
   },
-  titleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-    minWidth: 0,
-  },
-  icon: { fontSize: 10, fontWeight: 'bold', color: '#94a3b8' },
   iconBadge: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     borderRadius: 4,
     backgroundColor: '#1e293b',
     borderWidth: 1,
@@ -171,35 +183,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontSize: 12, fontWeight: '600', color: '#cbd5e1', flex: 1 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  readyBadge: {
-    backgroundColor: '#10b981',
-    borderRadius: 99,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+  icon: { fontSize: 9, fontWeight: 'bold', color: '#94a3b8' },
+  title: { flex: 1, fontSize: 11, fontWeight: '600', color: '#cbd5e1' },
+  actions: { flexDirection: 'row', gap: 2 },
+  iconBtn: { padding: 3 },
+  cyclicBtnActive: {
+    backgroundColor: '#052e16',
+    borderRadius: 3,
   },
-  readyText: { fontSize: 9, fontWeight: 'bold', color: '#000' },
-  iconBtn: { padding: 2 },
-  iconBtnText: { fontSize: 14, color: '#64748b' },
-  deleteBtnText: { fontSize: 11, color: '#64748b' },
-  targetTime: { fontSize: 13, fontWeight: 'bold', color: '#e2e8f0', flex: 1 },
-  targetTimeReady: { color: '#34d399' },
-  countdowns: { alignItems: 'flex-end', gap: 2 },
-  realTime: { fontSize: 11, color: '#fbbf24' },
-  gameTime: { fontSize: 11, color: '#38bdf8' },
+  iconBtnText: { fontSize: 13, color: '#64748b' },
+  deleteBtnText: { fontSize: 10, color: '#64748b' },
   progressTrack: {
-    flex: 1,
-    height: 6,
+    height: 5,
     backgroundColor: '#1e293b',
     borderRadius: 99,
     overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: 99 },
-  pct: { fontSize: 10, color: '#64748b', width: 32, textAlign: 'right' },
-  confirmBtn: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3 },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  targetTime: { fontSize: 11, fontWeight: 'bold', color: '#e2e8f0', flex: 1 },
+  targetTimeReady: { color: '#34d399' },
+  pct: { fontSize: 10, color: '#64748b' },
+  realTime: { fontSize: 10, color: '#fbbf24' },
+  gameTime: { fontSize: 10, color: '#38bdf8' },
+  confirmBtn: {
+    borderRadius: 6,
+    paddingVertical: 5,
+    alignItems: 'center',
+    marginTop: 2,
+  },
   confirmBtnReady: { backgroundColor: '#10b981' },
   confirmBtnDisabled: { backgroundColor: '#1e293b' },
-  confirmBtnText: { fontSize: 12, fontWeight: 'bold', color: '#000' },
-  confirmBtnTextDisabled: { color: '#475569' },
+  confirmBtnText: { fontSize: 11, fontWeight: 'bold', color: '#000' },
+  confirmBtnTextDisabled: { color: '#334155' },
 });

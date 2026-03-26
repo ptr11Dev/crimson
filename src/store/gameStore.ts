@@ -9,6 +9,8 @@ export interface Mission {
   startDay: number;
   startTime: string;
   startRealTime: number;
+  cyclic: boolean;
+  cyclesCompleted: number;
 }
 
 export interface SpeedupTimestamp {
@@ -77,6 +79,12 @@ interface GameState {
   confirmGoldbar: () => void;
   addMission: (missionType: string, durationHours: number) => void;
   removeMission: (missionId: number) => void;
+  toggleMissionCyclic: (missionId: number) => void;
+  restartCyclicMission: (
+    missionId: number,
+    newStartDay: number,
+    newStartTime: string,
+  ) => void;
 }
 
 // Helper: add game minutes to a day+time, returns {day, time}
@@ -313,6 +321,8 @@ const useGameStore = create<GameState>()(
           startDay: state.currentGameDay,
           startTime: state.currentGameTime,
           startRealTime: Date.now(),
+          cyclic: false,
+          cyclesCompleted: 0,
         };
         set({ missions: [...state.missions, newMission] });
       },
@@ -320,6 +330,30 @@ const useGameStore = create<GameState>()(
       removeMission: (missionId: number) => {
         set((state) => ({
           missions: state.missions.filter((m) => m.id !== missionId),
+        }));
+      },
+
+      toggleMissionCyclic: (missionId: number) => {
+        set((state) => ({
+          missions: state.missions.map((m) =>
+            m.id === missionId ? { ...m, cyclic: !m.cyclic } : m,
+          ),
+        }));
+      },
+
+      restartCyclicMission: (missionId, newStartDay, newStartTime) => {
+        set((state) => ({
+          missions: state.missions.map((m) =>
+            m.id === missionId
+              ? {
+                  ...m,
+                  startDay: newStartDay,
+                  startTime: newStartTime,
+                  startRealTime: Date.now(),
+                  cyclesCompleted: m.cyclesCompleted + 1,
+                }
+              : m,
+          ),
         }));
       },
     }),

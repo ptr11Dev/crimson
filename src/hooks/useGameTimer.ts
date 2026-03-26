@@ -3,6 +3,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import useGameStore from '../store/gameStore';
+import useSettingsStore from '../store/settingsStore';
 import { TIMER_REFRESH_INTERVAL } from '../constants';
 import {
   calculateCurrentGameTime,
@@ -38,6 +39,7 @@ export interface SpeedupTimer {
   nextTime: string;
   progress: number;
   realTimeRemaining: string | null;
+  gameTimeRemaining: string | null;
 }
 
 export interface IncomeTimer {
@@ -56,6 +58,7 @@ export interface GoldbarTimer {
   nextDay: number;
   progress: number;
   realTimeRemaining: string | null;
+  gameTimeRemaining: string | null;
 }
 
 export interface MissionTimer {
@@ -67,6 +70,8 @@ export interface MissionTimer {
   progress: number;
   realTimeRemaining: string | null;
   gameTimeRemaining: string | null;
+  cyclic: boolean;
+  cyclesCompleted: number;
 }
 
 interface UseGameTimerReturn {
@@ -80,6 +85,7 @@ interface UseGameTimerReturn {
   handleConfirmIncome: () => void;
   handleConfirmGoldbar: () => void;
   handleConfirmMission: (missionId: number) => void;
+  handleToggleMissionCyclic: (missionId: number) => void;
 }
 
 const useGameTimer = (): UseGameTimerReturn => {
@@ -97,8 +103,12 @@ const useGameTimer = (): UseGameTimerReturn => {
     confirmIncome,
     confirmGoldbar,
     removeMission,
+    toggleMissionCyclic,
+    restartCyclicMission,
     setLiveGameTime,
   } = useGameStore();
+
+  const { realToGameRatio, notificationLeadMinutes } = useSettingsStore();
 
   const [currentTime, setCurrentTime] = useState<GameTime | null>(null);
   const [speedupTimer, setSpeedupTimer] = useState<SpeedupTimer | null>(null);
@@ -110,13 +120,22 @@ const useGameTimer = (): UseGameTimerReturn => {
   // re-schedule on every tick — only once per timer per cycle.
   const notifScheduledRef = useRef<Set<string>>(new Set());
 
+  // Track which cyclic missions have already been auto-restarted this cycle
+  // to prevent double-restart within the same available window.
+  const cyclicRestartedRef = useRef<Set<number>>(new Set());
+
   const scheduleIfNeeded = useCallback(
     async (timerId: string, endTimestampMs: number, label: string) => {
       if (notifScheduledRef.current.has(timerId)) return;
       notifScheduledRef.current.add(timerId);
-      await scheduleTimerNotification(timerId, endTimestampMs, label);
+      await scheduleTimerNotification(
+        timerId,
+        endTimestampMs,
+        label,
+        notificationLeadMinutes,
+      );
     },
-    [],
+    [notificationLeadMinutes],
   );
 
   const tick = useCallback(() => {
@@ -126,6 +145,7 @@ const useGameTimer = (): UseGameTimerReturn => {
       baselineRealTime,
       baselineGameDay,
       baselineGameTime,
+      realToGameRatio,
     );
     setCurrentTime(gameTime);
     setLiveGameTime(gameTime.day, gameTime.time);
@@ -147,8 +167,17 @@ const useGameTimer = (): UseGameTimerReturn => {
             baselineGameTime,
             speedup.nextDay,
             speedup.nextTime,
+            realToGameRatio,
           )
         : 0;
+      const speedupGameRemaining =
+        !speedup.available && speedup.remainingMinutes > 0
+          ? (() => {
+              const h = Math.floor(speedup.remainingMinutes / 60);
+              const m = Math.floor(speedup.remainingMinutes % 60);
+              return `${h}h ${m}m`;
+            })()
+          : null;
       setSpeedupTimer({
         available: speedup.available,
         remainingMinutes: speedup.remainingMinutes,
@@ -156,6 +185,7 @@ const useGameTimer = (): UseGameTimerReturn => {
         nextTime: speedup.nextTime,
         progress,
         realTimeRemaining: !speedup.available ? formatMs(msUntil) : null,
+        gameTimeRemaining: speedupGameRemaining,
       });
       if (!speedup.available) {
         scheduleIfNeeded(
@@ -184,6 +214,7 @@ const useGameTimer = (): UseGameTimerReturn => {
             baselineGameTime,
             income.nextDay,
             income.nextTime,
+            realToGameRatio,
           )
         : 0;
       const incomeGameRemaining =
@@ -227,14 +258,25 @@ const useGameTimer = (): UseGameTimerReturn => {
             baselineGameTime,
             goldbar.nextDay,
             '00:00',
+            realToGameRatio,
           )
         : 0;
+      const goldbarGameRemaining =
+        !goldbar.available && goldbar.remainingDays > 0
+          ? (() => {
+              const totalH = Math.round(goldbar.remainingDays * 24);
+              const d = Math.floor(totalH / 24);
+              const h = totalH % 24;
+              return d > 0 ? `${d}d ${h}h` : `${h}h`;
+            })()
+          : null;
       setGoldbarTimer({
         available: goldbar.available,
         remainingDays: goldbar.remainingDays,
         nextDay: goldbar.nextDay,
         progress,
         realTimeRemaining: !goldbar.available ? formatMs(msUntilGoldbar) : null,
+        gameTimeRemaining: goldbarGameRemaining,
       });
       if (!goldbar.available) {
         scheduleIfNeeded(
@@ -262,6 +304,7 @@ const useGameTimer = (): UseGameTimerReturn => {
             baselineGameTime,
             missionTime.endDay,
             missionTime.endTime,
+            realToGameRatio,
           )
         : 0;
       if (!missionTime.available) {
@@ -279,6 +322,23 @@ const useGameTimer = (): UseGameTimerReturn => {
               return `${h}h ${m}m`;
             })()
           : null;
+
+      // Auto-restart cyclic missions when they become available
+      if (missionTime.available && mission.cyclic) {
+        if (!cyclicRestartedRef.current.has(mission.id)) {
+          cyclicRestartedRef.current.add(mission.id);
+          cancelTimerNotification(`mission-${mission.id}`);
+          notifScheduledRef.current.delete(`mission-${mission.id}`);
+          restartCyclicMission(
+            mission.id,
+            missionTime.endDay,
+            missionTime.endTime,
+          );
+        }
+      } else if (!missionTime.available) {
+        cyclicRestartedRef.current.delete(mission.id);
+      }
+
       return {
         id: mission.id,
         type: mission.type,
@@ -290,6 +350,8 @@ const useGameTimer = (): UseGameTimerReturn => {
           ? formatMs(msUntilMission)
           : null,
         gameTimeRemaining: gameRemaining,
+        cyclic: mission.cyclic,
+        cyclesCompleted: mission.cyclesCompleted,
       };
     });
     setMissionTimers(newMissionTimers);
@@ -304,6 +366,8 @@ const useGameTimer = (): UseGameTimerReturn => {
     missions,
     scheduleIfNeeded,
     setLiveGameTime,
+    restartCyclicMission,
+    realToGameRatio,
   ]);
 
   // Only tick while app is active; notifications fire independently in background
@@ -355,7 +419,13 @@ const useGameTimer = (): UseGameTimerReturn => {
   const handleConfirmMission = (missionId: number) => {
     cancelTimerNotification(`mission-${missionId}`);
     notifScheduledRef.current.delete(`mission-${missionId}`);
+    cyclicRestartedRef.current.delete(missionId);
     removeMission(missionId);
+  };
+
+  const handleToggleMissionCyclic = (missionId: number) => {
+    cyclicRestartedRef.current.delete(missionId);
+    toggleMissionCyclic(missionId);
   };
 
   return {
@@ -371,6 +441,7 @@ const useGameTimer = (): UseGameTimerReturn => {
     handleConfirmIncome,
     handleConfirmGoldbar,
     handleConfirmMission,
+    handleToggleMissionCyclic,
   };
 };
 

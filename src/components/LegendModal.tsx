@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { REAL_TO_GAME_RATIO } from '../constants';
+import useSettingsStore from '../store/settingsStore';
 
 interface Props {
   visible: boolean;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function LegendModal({ visible, onClose }: Props) {
+  const ratio = useSettingsStore((s) => s.realToGameRatio);
   return (
     <Modal
       visible={visible}
@@ -26,15 +28,15 @@ export default function LegendModal({ visible, onClose }: Props) {
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.card}>
-              <Text style={styles.title}>Legenda</Text>
+              <Text style={styles.title}>Legend</Text>
 
               <View style={styles.row}>
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>SP</Text>
                 </View>
                 <View style={styles.rowContent}>
-                  <Text style={styles.label}>Przyspieszenie czasu</Text>
-                  <Text style={styles.value}>co 10h in-game</Text>
+                  <Text style={styles.label}>Time Skip</Text>
+                  <Text style={styles.value}>every 10h in-game</Text>
                 </View>
               </View>
 
@@ -43,8 +45,8 @@ export default function LegendModal({ visible, onClose }: Props) {
                   <Text style={styles.badgeText}>$</Text>
                 </View>
                 <View style={styles.rowContent}>
-                  <Text style={styles.label}>Dochód</Text>
-                  <Text style={styles.value}>co 3 dni in-game</Text>
+                  <Text style={styles.label}>Income</Text>
+                  <Text style={styles.value}>every 3 days in-game</Text>
                 </View>
               </View>
 
@@ -53,8 +55,8 @@ export default function LegendModal({ visible, onClose }: Props) {
                   <Text style={styles.badgeText}>GB</Text>
                 </View>
                 <View style={styles.rowContent}>
-                  <Text style={styles.label}>Goldbar — Lioncrest Manor</Text>
-                  <Text style={styles.value}>co 7 dni in-game</Text>
+                  <Text style={styles.label}>Goldbar</Text>
+                  <Text style={styles.value}>every 7 days in-game</Text>
                 </View>
               </View>
 
@@ -63,22 +65,20 @@ export default function LegendModal({ visible, onClose }: Props) {
                   <Text style={styles.badgeText}>M</Text>
                 </View>
                 <View style={styles.rowContent}>
-                  <Text style={styles.label}>Misja pracownika</Text>
-                  <Text style={styles.value}>
-                    czas zdefiniowany przy dodaniu
-                  </Text>
+                  <Text style={styles.label}>Worker Mission</Text>
+                  <Text style={styles.value}>duration set when added</Text>
                 </View>
               </View>
 
               <View style={styles.divider} />
 
               <Text style={styles.ratioText}>
-                {REAL_TO_GAME_RATIO} min real ={' '}
+                {ratio} min real ={' '}
                 <Text style={styles.ratioHighlight}>1h in-game</Text>
               </Text>
 
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <Text style={styles.closeBtnText}>Zamknij</Text>
+                <Text style={styles.closeBtnText}>Close</Text>
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>

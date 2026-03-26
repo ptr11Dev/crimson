@@ -12,13 +12,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import useGameStore, { Mission } from '../store/gameStore';
-import { REAL_TO_GAME_RATIO } from '../constants';
 import LegendModal from './LegendModal';
+import SettingsModal from './SettingsModal';
 
 export default function GameStart() {
   const { sessionStartTime, startSession, savedSessionData, lastGoldbarDay } =
     useGameStore();
   const [legendVisible, setLegendVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const [gameDay, setGameDay] = useState('1');
   const [gameHour, setGameHour] = useState('0');
@@ -86,6 +87,8 @@ export default function GameStart() {
           startDay,
           startTime: `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`,
           startRealTime: Date.now(),
+          cyclic: false,
+          cyclesCompleted: 0,
         };
       });
 
@@ -112,6 +115,10 @@ export default function GameStart() {
         visible={legendVisible}
         onClose={() => setLegendVisible(false)}
       />
+      <SettingsModal
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -124,7 +131,7 @@ export default function GameStart() {
           <View style={styles.header}>
             <View style={styles.headerContent}>
               <Text style={styles.title}>Crimson Desert</Text>
-              <Text style={styles.subtitle}>Timer Tracker — Nowa sesja</Text>
+              <Text style={styles.subtitle}>Timer Tracker — New Session</Text>
             </View>
             <TouchableOpacity
               onPress={() => setLegendVisible(true)}
@@ -137,14 +144,21 @@ export default function GameStart() {
                 color="#64748b"
               />
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSettingsVisible(true)}
+              style={[styles.infoBtn, styles.settingsBtn]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="settings-outline" size={20} color="#64748b" />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.card}>
             {/* Game time */}
-            <Text style={styles.sectionLabel}>Bieżący czas w grze</Text>
+            <Text style={styles.sectionLabel}>GAME TIME</Text>
             <View style={styles.row3}>
               <View style={styles.flex}>
-                <Text style={styles.inputLabel}>Dzień</Text>
+                <Text style={styles.inputLabel}>Day</Text>
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
@@ -154,7 +168,7 @@ export default function GameStart() {
                 />
               </View>
               <View style={styles.flex}>
-                <Text style={styles.inputLabel}>Godzina</Text>
+                <Text style={styles.inputLabel}>Hour</Text>
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
@@ -164,7 +178,7 @@ export default function GameStart() {
                 />
               </View>
               <View style={styles.flex}>
-                <Text style={styles.inputLabel}>Minuta</Text>
+                <Text style={styles.inputLabel}>Min</Text>
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
@@ -177,11 +191,9 @@ export default function GameStart() {
 
             {/* Speedup */}
             <Text style={[styles.sectionLabel, styles.sectionGap]}>
-              Przyspieszenie czasu
+              TIME SKIP
             </Text>
-            <Text style={styles.inputLabel}>
-              Ile godzin (in-game) do następnego?
-            </Text>
+            <Text style={styles.inputLabel}>Hours until next</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
@@ -189,17 +201,12 @@ export default function GameStart() {
               onChangeText={setNextSpeedupHours}
               placeholderTextColor="#475569"
             />
-            <Text style={styles.hint}>
-              Domyślnie 10h (cykl resetuje się po wykonaniu)
-            </Text>
 
             {/* Income */}
-            <Text style={[styles.sectionLabel, styles.sectionGap]}>
-              Następny dochód
-            </Text>
+            <Text style={[styles.sectionLabel, styles.sectionGap]}>INCOME</Text>
             <View style={styles.row2}>
               <View style={styles.flex}>
-                <Text style={styles.inputLabel}>Za ile dni?</Text>
+                <Text style={styles.inputLabel}>Days</Text>
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
@@ -210,7 +217,7 @@ export default function GameStart() {
                 />
               </View>
               <View style={[styles.flex, styles.rowGap]}>
-                <Text style={styles.inputLabel}>Za ile godzin?</Text>
+                <Text style={styles.inputLabel}>Hours</Text>
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
@@ -221,37 +228,32 @@ export default function GameStart() {
                 />
               </View>
             </View>
-            <Text style={styles.hint}>
-              Pozostały czas do pobrania dochodu (in-game)
-            </Text>
 
             {/* Goldbar */}
             <Text style={[styles.sectionLabel, styles.sectionGap]}>
-              Goldbar — Lioncrest Manor
+              GOLDBAR
             </Text>
-            <Text style={styles.inputLabel}>Dzień ostatniej kradzieży</Text>
+            <Text style={styles.inputLabel}>Last theft day</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
               value={goldbarDay}
               onChangeText={setGoldbarDay}
-              placeholder="Opcjonalne"
+              placeholder="Optional"
               placeholderTextColor="#475569"
             />
-            <Text style={styles.hint}>Zostaw puste jeśli nie pamiętasz</Text>
 
             {/* Restored missions notice */}
             {savedMissionCount > 0 && (
               <View style={styles.restoredBadge}>
                 <Text style={styles.restoredText}>
-                  ✓ {savedMissionCount} misja(-e) z poprzedniej sesji zostanie
-                  przywrócona.
+                  ✓ {savedMissionCount} mission(s) restored from last session.
                 </Text>
               </View>
             )}
 
             <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
-              <Text style={styles.startBtnText}>Start Grania</Text>
+              <Text style={styles.startBtnText}>Start Session</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -273,7 +275,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   headerContent: { alignItems: 'center' },
-  infoBtn: { position: 'absolute', right: 0 },
+  infoBtn: { position: 'absolute', right: 32 },
+  settingsBtn: { right: 0 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#34d399' },
   subtitle: { fontSize: 12, color: '#64748b', marginTop: 4 },
   card: {

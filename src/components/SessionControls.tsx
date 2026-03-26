@@ -8,7 +8,7 @@ export default function SessionControls() {
   return (
     <View>
       <TouchableOpacity style={styles.btn} onPress={() => setShowModal(true)}>
-        <Text style={styles.btnText}>Zakończ sesję</Text>
+        <Text style={styles.btnText}>End Session</Text>
       </TouchableOpacity>
       {showModal && <EndSessionModal onClose={() => setShowModal(false)} />}
     </View>

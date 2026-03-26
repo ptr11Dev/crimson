@@ -15,6 +15,7 @@ import Timer from './Timer';
 import SessionControls from './SessionControls';
 import MissionManager from './MissionManager';
 import LegendModal from './LegendModal';
+import SettingsModal from './SettingsModal';
 
 export default function TimerDashboard() {
   const {
@@ -28,6 +29,7 @@ export default function TimerDashboard() {
     handleConfirmIncome,
     handleConfirmGoldbar,
     handleConfirmMission,
+    handleToggleMissionCyclic,
   } = useGameTimer();
 
   const { updateCurrentGameTime } = useGameStore();
@@ -37,10 +39,11 @@ export default function TimerDashboard() {
   const [editHour, setEditHour] = useState('');
   const [editMinute, setEditMinute] = useState('');
   const [legendVisible, setLegendVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const handleEditClick = () => {
     if (!currentGameTime) return;
-    const match = currentGameTime.match(/Dzień (\d+), (\d{2}):(\d{2})/);
+    const match = currentGameTime.match(/Day (\d+), (\d{2}):(\d{2})/);
     if (match) {
       setEditDay(match[1]);
       setEditHour(match[2]);
@@ -70,13 +73,13 @@ export default function TimerDashboard() {
         visible={legendVisible}
         onClose={() => setLegendVisible(false)}
       />
+      <SettingsModal
+        visible={settingsVisible}
+        onClose={() => setSettingsVisible(false)}
+      />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {/* Top bar */}
+        {/* Top bar: legend left, title centered, spacer right */}
         <View style={styles.topBar}>
-          <View style={styles.topBarLeft}>
-            <Text style={styles.appTitle}>Crimson Desert</Text>
-            <Text style={styles.appSubtitle}>Timer Tracker</Text>
-          </View>
           <TouchableOpacity
             onPress={() => setLegendVisible(true)}
             style={styles.infoBtn}
@@ -88,14 +91,24 @@ export default function TimerDashboard() {
               color="#64748b"
             />
           </TouchableOpacity>
-          <SessionControls />
+          <TouchableOpacity
+            onPress={() => setSettingsVisible(true)}
+            style={styles.infoBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="settings-outline" size={18} color="#64748b" />
+          </TouchableOpacity>
+          <View style={styles.topBarCenter}>
+            <Text style={styles.appTitle}>Crimson Desert</Text>
+            <Text style={styles.appSubtitle}>Timer Tracker</Text>
+          </View>
+          <View style={styles.topBarSpacer} />
         </View>
 
         {/* Game clock */}
         <View style={styles.clockRow}>
           {!isEditing ? (
             <View style={styles.clockDisplay}>
-              <Text style={styles.clockLabel}>Czas gry</Text>
               <Text style={styles.clockValue}>{currentGameTime}</Text>
               <TouchableOpacity
                 onPress={handleEditClick}
@@ -106,7 +119,7 @@ export default function TimerDashboard() {
             </View>
           ) : (
             <View style={styles.clockEdit}>
-              <Text style={styles.clockLabel}>Dzień</Text>
+              <Text style={styles.clockLabel}>Day</Text>
               <TextInput
                 style={styles.editInput}
                 keyboardType="numeric"
@@ -134,57 +147,70 @@ export default function TimerDashboard() {
                 style={styles.cancelBtn}
                 onPress={() => setIsEditing(false)}
               >
-                <Text style={styles.cancelBtnText}>Anuluj</Text>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           )}
+        </View>
+
+        {/* End session below clock */}
+        <View style={styles.endSessionRow}>
+          <SessionControls />
         </View>
 
         {/* Cyclic actions */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.dividerLine} />
-            <Text style={styles.sectionLabel}>Akcje Cykliczne</Text>
+            <Text style={styles.sectionLabel}>Cyclic Actions</Text>
             <View style={[styles.dividerLine, styles.dividerFlex]} />
           </View>
           <View style={styles.timerGrid}>
             {speedupTimer && (
-              <Timer
-                icon="SP"
-                title="Przyspieszenie Czasu"
-                targetDay={speedupTimer.nextDay}
-                targetTime={speedupTimer.nextTime}
-                currentProgress={speedupTimer.progress}
-                isReady={speedupTimer.available}
-                onConfirm={handleConfirmSpeedup}
-                onReset={handleResetSpeedup}
-                realTimeRemaining={speedupTimer.realTimeRemaining}
-              />
+              <View style={styles.timerCell}>
+                <Timer
+                  icon="SP"
+                  title="Time Skip"
+                  targetDay={speedupTimer.nextDay}
+                  targetTime={speedupTimer.nextTime}
+                  currentProgress={speedupTimer.progress}
+                  isReady={speedupTimer.available}
+                  onConfirm={handleConfirmSpeedup}
+                  onReset={handleResetSpeedup}
+                  realTimeRemaining={speedupTimer.realTimeRemaining}
+                  gameTimeRemaining={speedupTimer.gameTimeRemaining}
+                />
+              </View>
             )}
             {incomeTimer && (
-              <Timer
-                icon="$"
-                title="Pobranie Dochodu"
-                targetDay={incomeTimer.nextDay}
-                targetTime={incomeTimer.nextTime}
-                currentProgress={incomeTimer.progress}
-                isReady={incomeTimer.available}
-                onConfirm={handleConfirmIncome}
-                realTimeRemaining={incomeTimer.realTimeRemaining}
-                gameTimeRemaining={incomeTimer.gameTimeRemaining}
-              />
+              <View style={styles.timerCell}>
+                <Timer
+                  icon="$"
+                  title="Income"
+                  targetDay={incomeTimer.nextDay}
+                  targetTime={incomeTimer.nextTime}
+                  currentProgress={incomeTimer.progress}
+                  isReady={incomeTimer.available}
+                  onConfirm={handleConfirmIncome}
+                  realTimeRemaining={incomeTimer.realTimeRemaining}
+                  gameTimeRemaining={incomeTimer.gameTimeRemaining}
+                />
+              </View>
             )}
             {goldbarTimer && (
-              <Timer
-                icon="GB"
-                title="Goldbar — Lioncrest Manor"
-                targetDay={goldbarTimer.nextDay}
-                targetTime="00:00"
-                currentProgress={goldbarTimer.progress}
-                isReady={goldbarTimer.available}
-                onConfirm={handleConfirmGoldbar}
-                realTimeRemaining={goldbarTimer.realTimeRemaining}
-              />
+              <View style={styles.timerCell}>
+                <Timer
+                  icon="GB"
+                  title="Goldbar"
+                  targetDay={goldbarTimer.nextDay}
+                  targetTime="00:00"
+                  currentProgress={goldbarTimer.progress}
+                  isReady={goldbarTimer.available}
+                  onConfirm={handleConfirmGoldbar}
+                  realTimeRemaining={goldbarTimer.realTimeRemaining}
+                  gameTimeRemaining={goldbarTimer.gameTimeRemaining}
+                />
+              </View>
             )}
           </View>
         </View>
@@ -193,28 +219,32 @@ export default function TimerDashboard() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.dividerLine} />
-            <Text style={styles.sectionLabel}>Misje Pracowników</Text>
+            <Text style={styles.sectionLabel}>Worker Missions</Text>
             <View style={[styles.dividerLine, styles.dividerFlex]} />
           </View>
           <MissionManager />
           {missionTimers.length === 0 ? (
-            <Text style={styles.emptyText}>Brak aktywnych misji</Text>
+            <Text style={styles.emptyText}>No active missions</Text>
           ) : (
             <View style={[styles.timerGrid, styles.missionGrid]}>
               {missionTimers.map((mission) => (
-                <Timer
-                  key={mission.id}
-                  icon="M"
-                  title={mission.type}
-                  targetDay={mission.endDay}
-                  targetTime={mission.endTime}
-                  currentProgress={mission.progress}
-                  isReady={mission.available}
-                  onConfirm={() => handleConfirmMission(mission.id)}
-                  onDelete={() => handleConfirmMission(mission.id)}
-                  realTimeRemaining={mission.realTimeRemaining}
-                  gameTimeRemaining={mission.gameTimeRemaining}
-                />
+                <View key={mission.id} style={styles.timerCell}>
+                  <Timer
+                    icon="M"
+                    title={mission.type}
+                    targetDay={mission.endDay}
+                    targetTime={mission.endTime}
+                    currentProgress={mission.progress}
+                    isReady={mission.available}
+                    onConfirm={() => handleConfirmMission(mission.id)}
+                    onDelete={() => handleConfirmMission(mission.id)}
+                    realTimeRemaining={mission.realTimeRemaining}
+                    gameTimeRemaining={mission.gameTimeRemaining}
+                    cyclic={mission.cyclic}
+                    cyclesCompleted={mission.cyclesCompleted}
+                    onToggleCyclic={() => handleToggleMissionCyclic(mission.id)}
+                  />
+                </View>
               ))}
             </View>
           )}
@@ -231,29 +261,32 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 8,
+    marginBottom: 12,
   },
-  topBarLeft: { flex: 1 },
-  infoBtn: { paddingHorizontal: 2 },
+  topBarCenter: { flex: 1, alignItems: 'center' },
+  topBarSpacer: { width: 56 },
+  infoBtn: { width: 28, alignItems: 'flex-start' },
   appTitle: { fontSize: 22, fontWeight: 'bold', color: '#34d399' },
   appSubtitle: { fontSize: 12, color: '#64748b' },
-  clockRow: { marginBottom: 24 },
+  endSessionRow: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  clockRow: { marginBottom: 8 },
   clockDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    gap: 10,
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignSelf: 'flex-start',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   clockLabel: { fontSize: 11, color: '#64748b', textTransform: 'uppercase' },
-  clockValue: { fontSize: 14, fontWeight: 'bold', color: '#34d399' },
+  clockValue: { fontSize: 20, fontWeight: 'bold', color: '#34d399' },
   editBtn: {
     paddingHorizontal: 6,
     paddingVertical: 4,
@@ -265,13 +298,14 @@ const styles = StyleSheet.create({
   clockEdit: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#059669',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 10,
   },
   editInput: {
     backgroundColor: '#334155',
@@ -314,7 +348,13 @@ const styles = StyleSheet.create({
   },
   dividerLine: { width: 24, height: 1, backgroundColor: '#334155' },
   dividerFlex: { flex: 1 },
-  timerGrid: { gap: 8 },
+  timerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'stretch',
+  },
+  timerCell: { width: '48%', flexGrow: 1 },
   missionGrid: { marginTop: 12 },
   emptyText: {
     color: '#475569',

@@ -41,11 +41,12 @@ export async function scheduleTimerNotification(
   timerId: string,
   endTimestampMs: number,
   label: string,
+  leadMinutes: number = 5,
 ): Promise<void> {
   // Cancel any existing notification for this timer first
   await cancelTimerNotification(timerId);
 
-  const triggerMs = endTimestampMs - 5 * 60 * 1000; // 5 min before end
+  const triggerMs = endTimestampMs - leadMinutes * 60 * 1000;
   const now = Date.now();
 
   // Don't schedule if the trigger is in the past
@@ -53,8 +54,8 @@ export async function scheduleTimerNotification(
 
   const id = await Notifications.scheduleNotificationAsync({
     content: {
-      title: '⚔️ Crimson Desert',
-      body: `${label} — gotowe za 5 minut!`,
+      title: 'Crimson Desert',
+      body: `${label} — ready in ${leadMinutes} min!`,
       sound: true,
     },
     trigger: {

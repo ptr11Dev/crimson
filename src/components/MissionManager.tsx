@@ -15,7 +15,7 @@ export default function MissionManager() {
   const handleAdd = () => {
     const h = parseFloat(hours);
     if (!h || h <= 0) return;
-    addMission(`Misja ${h}h`, h);
+    addMission(`Mission ${h}h`, h);
     setHours('');
   };
 
@@ -28,7 +28,7 @@ export default function MissionManager() {
         keyboardType="numeric"
         value={hours}
         onChangeText={setHours}
-        placeholder="Czas misji (godz. in-game)"
+        placeholder="Duration (in-game hours)"
         placeholderTextColor="#475569"
       />
       <TouchableOpacity
@@ -37,7 +37,7 @@ export default function MissionManager() {
         style={[styles.btn, !valid && styles.btnDisabled]}
       >
         <Text style={[styles.btnText, !valid && styles.btnTextDisabled]}>
-          + Dodaj
+          + Add
         </Text>
       </TouchableOpacity>
     </View>

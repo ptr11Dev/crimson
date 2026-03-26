@@ -29,24 +29,23 @@ export default function EndSessionModal({ onClose }: Props) {
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.card}>
-              <Text style={styles.title}>Zakończyć sesję?</Text>
+              <Text style={styles.title}>End Session?</Text>
               <Text style={styles.body}>
-                Stan timerów zostanie zapisany i wczytany przy następnym
-                starcie.
+                Timer state will be saved and restored on next session.
               </Text>
               <Text style={styles.sub}>
-                Goldbar i czasy dochodów / misji są zachowane lokalnie.
+                Goldbar & income / mission times are stored locally.
               </Text>
 
               <View style={styles.buttons}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                  <Text style={styles.cancelText}>Anuluj</Text>
+                  <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmBtn}
                   onPress={handleConfirm}
                 >
-                  <Text style={styles.confirmText}>Tak, zakończ</Text>
+                  <Text style={styles.confirmText}>End Session</Text>
                 </TouchableOpacity>
               </View>
             </View>
